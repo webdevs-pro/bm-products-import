@@ -3,7 +3,7 @@
 Plugin Name: BM Products Importer 
 Plugin URI: https://github.com/webdevs-pro/bm-products-import/
 Description: This plugin imports products from locals store
-Version: 0.1
+Version: 0.4
 Author: Magnific Soft
 Author URI: https://github.com/webdevs-pro/
 Text Domain:  bm-products-import
@@ -14,7 +14,10 @@ load_plugin_textdomain( 'bm-products-import', false, basename( dirname( __FILE__
 define('BM_PLUGIN_BASENAME', plugin_basename(__FILE__));
 
 include( plugin_dir_path( __FILE__ ) . 'admin/admin.php');
-include( plugin_dir_path( __FILE__ ) . 'fetch.php');
+include( plugin_dir_path( __FILE__ ) . 'files.php');
+include( plugin_dir_path( __FILE__ ) . 'import.php');
+
+
 
 // ADMIN JS SCRIPT
 add_action('admin_enqueue_scripts', 'bm_admin_scripts');
@@ -60,26 +63,27 @@ function cron_add_ten_min( $schedules ) {
 register_activation_hook(__FILE__, 'bm_activation');
 function bm_activation() {
     
-   //  $period = get_option('bm_fetch_period');
+   //  $period = get_option('bm_import_period');
 
-   //  if (! wp_next_scheduled ( 'bm_fetch_new_products' )) {
+   //  if (! wp_next_scheduled ( 'bm_import_new_products' )) {
    //      if (!isset($period)) {
    //          $period = '10';
    //      }
-   //      wp_schedule_event(time(), $period . '_min', 'bm_fetch_new_products');
-   //      $timestamp = wp_next_scheduled( 'bm_fetch_new_products' );
+   //      wp_schedule_event(time(), $period . '_min', 'bm_import_new_products');
+   //      $timestamp = wp_next_scheduled( 'bm_import_new_products' );
 
    //      error_log($timestamp);
    //  }
 }
  
-add_action('bm_fetch_new_products', 'bm_check_new_products_fn');
+add_action('bm_import_new_products', 'bm_check_new_products_fn');
 function bm_check_new_products_fn() {
     error_log('DOING CRON');
-    cron_fetch_new_products();
+    bm_check_files_and_import();
+    
 }
 
 register_deactivation_hook( __FILE__, 'bm_deactivation' );
 function bm_deactivation() {
-    wp_clear_scheduled_hook( 'bm_fetch_new_products' );
-}
+    wp_clear_scheduled_hook( 'bm_import_new_products' );
+} 
