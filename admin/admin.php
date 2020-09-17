@@ -34,7 +34,7 @@ function bm_create_menu() {
 
 function register_bm_settings() {
    //register our settings
-   register_setting( 'bm-settings-group', 'bm_folder' );
+   register_setting( 'bm-settings-group', 'bm_exclude_asortyments' );
    register_setting( 'bm-settings-group', 'bm_import_period' );
 
    if ( get_option('bm_import_period') === false ) {
@@ -55,13 +55,7 @@ function bm_settings_page() {
          <table class="form-table">
 
 
-            <!-- RSS URL FIELD -->
-            <tr valign="top">
-               <th scope="row">Folder with XML</th>
-               <td>
-                  <input id="bm_import_url" type="text" name="bm_folder" value="<?php echo esc_attr( get_option('bm_folder') ); ?>" style="width: 100%;" autocomplete="off" />
-               </td>
-            </tr>
+
 
 
             <!-- CHECK PERIOD -->
@@ -81,7 +75,14 @@ function bm_settings_page() {
                </td>
             </tr>
 
-            
+            <!-- RSS URL FIELD -->
+            <tr valign="top">
+               <th scope="row">Asortyments to exclude</th>
+               <td>
+                  <input id="bm_exclude_asortyments" type="text" name="bm_exclude_asortyments" value="<?php echo esc_attr( get_option('bm_exclude_asortyments') ); ?>" style="width: 100%;" autocomplete="off" />
+                  <p><em>Comma separated list of asortyments to exlude from import. Will be ignored asortyments and products within asortyments.</em></p>
+               </td>
+            </tr>         
 
 
          </table>

@@ -21,7 +21,7 @@
 
 
 
-//       var folder = $('#bm_import_url').val();
+//       var folder = $('#bm_exclude_asortyments').val();
 
 
 //       var selectedFile = document.getElementById('bm_uload_file').files[0];

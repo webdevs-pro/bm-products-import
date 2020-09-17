@@ -10,7 +10,8 @@ class BM_XML_Import {
 
    public $file;
    public $uploads_dir;
-
+   public $exclude_asortyments;
+   
    // public $existing_categories;
 
    public function __construct($file) {
@@ -19,6 +20,9 @@ class BM_XML_Import {
       $before = microtime(true);
 
       $this->uploads_dir = wp_get_upload_dir();
+      $this->exclude_asortyments = explode(',', get_option('bm_exclude_asortyments'));
+      error_log( "exclude_asortyments\n" . print_r($this->exclude_asortyments, true) . "\n" );
+
 
       $this->file = $file;
       $this->import_from_xml_file($file);
@@ -108,10 +112,16 @@ class BM_XML_Import {
          $this->admin_notice('Too mutch categories', 'error');
          return false;          
       }
+
    
       foreach($imported_categories->asortyment as $imported_category) {
    
          $imported_category = json_decode(json_encode($imported_category), true);
+
+         if(in_array($imported_category['asortyment_id'], $this->exclude_asortyments)) {
+            error_log('ignored asortyment - ' . $imported_category['asortyment_nazwa'] . ', asortyment_id - ' . $imported_category['asortyment_id']);
+            continue;
+         }
 
          $args = array(
             'hide_empty' => false,
@@ -283,6 +293,11 @@ class BM_XML_Import {
    
          $imported_product = json_decode(json_encode($imported_product), true);
          // error_log( "imported_product\n" . print_r($imported_product, true) . "\n" );
+
+         if(in_array($imported_product['asortyment_id'], $this->exclude_asortyments)) {
+            error_log('ignored product - ' . $imported_product['nazwa'] . ', asortyment_id - ' . $imported_product['asortyment_id']);
+            continue;
+         }
 
          $args = array(
             'post_type' => 'product',
