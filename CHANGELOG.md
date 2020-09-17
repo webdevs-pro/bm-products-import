@@ -1,6 +1,9 @@
 BM Products Importer
 ====================================
 
+0.6
+-----
+- deleting products and categories
 
 0.4
 -----

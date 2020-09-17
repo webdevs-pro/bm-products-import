@@ -98,7 +98,7 @@ class BM_XML_files {
 
          $name = basename($file); 
 
-         preg_match('/[0-9]{14}/', $name, $date_match);
+         preg_match('/exp_wyk_/', $name, $date_match);
          if(isset($date_match[0])) {
             $date = strtotime($date_match[0]);
          } else {

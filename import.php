@@ -51,14 +51,13 @@ class BM_XML_Import {
       $cat_result = $this->import_categories($xml);
       $products_result = $this->import_products($xml);
 
-      // error_log( print_r($cat_result, true) );
-      // error_log( print_r($products_result, true) );
+      error_log( "cat_result\n" . print_r($cat_result, true) . "\n" );
+      error_log( "products_result\n" . print_r($products_result, true) . "\n" );
 
-      if($cat_result && $products_result) {
+
+      if($cat_result || $products_result) {
          $this->admin_notice('XML Successfully Imported', 'updated');
-      } else {
-         $this->admin_notice('Something goes wrong', 'error');
-      }
+      } 
       
    }
 
@@ -98,7 +97,11 @@ class BM_XML_Import {
       // CREATE UPDATE PRODUCT CATEGORIES
       $imported_categories = $xml->wykazy->asortymenty;
 
-      if (empty($imported_categories)) return false;
+      if (empty($imported_categories)) {
+         error_log('No asortyments to import');
+         return false;
+      }
+
 
       // no more than 500 categories
       if (count($imported_categories->asortyment) >= 500) {
@@ -122,21 +125,33 @@ class BM_XML_Import {
             ),
          );
          $existing_category = get_terms( 'product_cat', $args );
-         error_log(print_r($existing_category, true)); 
+         // error_log( "existing_category\n" . print_r($existing_category, true) . "\n" );
+
    
    
          if(!empty($existing_category)) {
+
+            if ($imported_category['do_usuniecia'] == 'N') {
    
-            // update existing category
-            $args = array(
-               'name' => $imported_category['asortyment_nazwa'],
-               'slug' => '',
-            );
-            wp_update_term( $existing_category[0]->term_id, 'product_cat', $args );
-            update_term_meta( $existing_category[0]->term_id, 'asortyment_id', $imported_category['asortyment_id']);
-            update_term_meta( $existing_category[0]->term_id, 'pod_asortymenty', array_shift($imported_category['pod_asortymenty']));
-   
-            error_log('updated term ' . $imported_category['asortyment_nazwa']);
+               // update existing category
+               $args = array(
+                  'name' => $imported_category['asortyment_nazwa'],
+                  'slug' => '',
+               );
+               wp_update_term( $existing_category[0]->term_id, 'product_cat', $args );
+               update_term_meta( $existing_category[0]->term_id, 'asortyment_id', $imported_category['asortyment_id']);
+               update_term_meta( $existing_category[0]->term_id, 'pod_asortymenty', array_shift($imported_category['pod_asortymenty']));
+      
+               error_log('updated term ' . $imported_category['asortyment_nazwa']);
+
+            } elseif ($imported_category['do_usuniecia'] == 'Y') {
+
+               $deleted = wp_delete_term( $existing_category[0]->term_id, 'product_cat' );
+               error_log('removed term - ' . $imported_category['asortyment_nazwa']);
+               error_log( "removed term result\n" . print_r($deleted, true) . "\n");
+
+
+            }
    
          } else {
    
@@ -150,6 +165,10 @@ class BM_XML_Import {
                   'slug'        => '',
                ) 
             );
+            error_log( "wp_insert_term\n" . print_r($term, true) . "\n" );
+
+
+
 
             
             // if term exist but not has asortyment_id meta set
@@ -157,16 +176,19 @@ class BM_XML_Import {
                $term_id = $term->get_error_data();
                $term = array();
                $term['term_id'] = $term_id;
-               error_log('--existing term without asortyment_id' . $imported_category['asortyment_nazwa']);
+               error_log('--existing term without asortyment_id - ' . $imported_category['asortyment_nazwa']);
             } else {
-               error_log('--dome error, skip term ' . $imported_category['asortyment_nazwa']);
-               continue;
+               // error_log('--some error, skip term ' . $imported_category['asortyment_nazwa']);
+               // error_log('skipped term name ' . $imported_category['asortyment_nazwa']);
+               // error_log( "skipped term\n" . print_r($term, true) . "\n" );
+               // continue;
             }
 
             update_term_meta( $term['term_id'], 'asortyment_id', $imported_category['asortyment_id']);
             update_term_meta( $term['term_id'], 'pod_asortymenty', array_shift($imported_category['pod_asortymenty']));
    
-            error_log('created term ' . $imported_category['asortyment_nazwa']);
+            error_log('created term - ' . $imported_category['asortyment_nazwa'] . ', asortyment_id - ' . $imported_category['asortyment_id']);
+            error_log( "created term\n" . print_r($term, true) . "\n");
    
          }
    
@@ -260,8 +282,7 @@ class BM_XML_Import {
          set_time_limit(0);
    
          $imported_product = json_decode(json_encode($imported_product), true);
-
-         // error_log( print_r($imported_product, true) );
+         // error_log( "imported_product\n" . print_r($imported_product, true) . "\n" );
 
          $args = array(
             'post_type' => 'product',
@@ -278,27 +299,45 @@ class BM_XML_Import {
 
             $existing_product_id = $existing_product[0]->get_id();
 
-            wp_update_post(
-               array(
-                  'ID' => $existing_product_id,
-                  'post_title' => $imported_product['nazwa'] ?: '',
-                  'post_content' => $imported_product['notatki'] ?: '',
-               )
-            );
+            // check to remove product
+            if ($imported_product['do_usuniecia'] == 'N') { // UPDATE
 
-            $this->set_product_data(
-               array(
-                  'id' => $existing_product_id,
-                  'towar_id' => $imported_product['towar_id'],
-                  'asortyment_id' => $imported_product['asortyment_id'],
-                  'plik_zdjecia' => $imported_product['plik_zdjecia'],
-                  'cena_detal' => $imported_product['cena_detal'], 
-                  'stock' => $imported_product['magazyny']['magazyn']['0']['stan_magazynu'], 
-                  'sku' => $imported_product['kod'],
-               )
-            );
+               wp_update_post(
+                  array(
+                     'ID' => $existing_product_id,
+                     'post_title' => $imported_product['nazwa'] ?: '',
+                     'post_content' => $imported_product['notatki'] ?: '',
+                  )
+               );
 
-            error_log('updated product ' . $imported_product['nazwa']);
+               $this->set_product_data(
+                  array(
+                     'id' => $existing_product_id,
+                     'towar_id' => $imported_product['towar_id'],
+                     'asortyment_id' => $imported_product['asortyment_id'],
+                     'plik_zdjecia' => $imported_product['plik_zdjecia'],
+                     'cena_detal' => $imported_product['cena_detal'], 
+                     'stock' => $imported_product['magazyny']['magazyn']['0']['stan_magazynu'], 
+                     'sku' => $imported_product['kod'],
+                  )
+               );
+
+               error_log('updated product ' . $imported_product['nazwa']);
+
+            } elseif ($imported_product['do_usuniecia'] == 'Y') {
+               
+               $deleted = $this->delete_product($existing_product_id);
+
+               if (!is_wp_error($deleted)) {
+                  error_log('deleted product ' . $imported_product['nazwa']);
+               } else {
+                  error_log('error deleting product ' . $imported_product['nazwa'] . '\n' . print_r($deleted, true));
+               }
+
+            }
+
+
+            
 
          } else {
 
@@ -384,9 +423,27 @@ class BM_XML_Import {
             ),
          );
          $product_category = get_terms( 'product_cat', $args );
-         if(!empty($product_category)) {
+         error_log( "asortyment_id\n" . print_r($data['asortyment_id'], true) . "\n" );
+         error_log( "product_category\n" . print_r($product_category, true) . "\n" );
+
+         // set category
+         if(!empty($product_category)) { // if exist
             wp_set_object_terms( $data['id'], $product_category[0]->term_id, 'product_cat' );
-         }              
+         } else { // create new category if not exist
+            $term = wp_insert_term( 
+               $data['asortyment_id'],
+               'product_cat', 
+               array(
+                  'description' => '',
+                  // 'parent'      => 0,
+                  'slug'        => '',
+               ) 
+            );   
+            update_term_meta( $term['term_id'], 'asortyment_id', $data['asortyment_id']);
+            wp_set_object_terms( $data['id'], $term['term_id'], 'product_cat' );   
+            error_log('new not existing category created from product (temporary named by ID) ' . $data['asortyment_id']);
+
+         }           
       }
 
       // set custom featured image
@@ -416,6 +473,56 @@ class BM_XML_Import {
 
     }
 
+
+   /**
+   * Method to delete Woo Product
+   * 
+   * @param int $id the product ID.
+   * @param bool $force true to permanently delete product, false to move to trash.
+   * @return \WP_Error|boolean
+   */
+   public function delete_product($id, $force = FALSE) {
+
+      $product = wc_get_product($id);
+
+      if(empty($product))
+         return new WP_Error(999, sprintf(__('No %s is associated with #%d', 'woocommerce'), 'product', $id));
+
+      // If we're forcing, then delete permanently.
+      if ($force) {
+         if ($product->is_type('variable')) {
+            foreach ($product->get_children() as $child_id) {
+               $child = wc_get_product($child_id);
+               $child->delete(true);
+            }
+         } elseif ($product->is_type('grouped')) {
+            foreach ($product->get_children() as $child_id) {
+               $child = wc_get_product($child_id);
+               $child->set_parent_id(0);
+               $child->save();
+            }
+         }
+
+         $product->delete(true);
+         $result = $product->get_id() > 0 ? false : true;
+
+      } else {
+         $product->delete();
+         $result = 'trash' === $product->get_status();
+      }
+
+      if (!$result) {
+         return new WP_Error(999, sprintf(__('This %s cannot be deleted', 'woocommerce'), 'product'));
+      }
+
+      // Delete parent product transients.
+      if ($parent_id = wp_get_post_parent_id($id)) {
+         wc_delete_product_transients($parent_id);
+      }
+
+      return true;
+   }
+
 }
 
 
@@ -434,8 +541,9 @@ add_action( 'admin_init', function() {
 
    }
 
-});
+   
 
+});
 
 
 
