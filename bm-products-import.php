@@ -3,7 +3,7 @@
 Plugin Name: BM Products Importer 
 Plugin URI: https://github.com/webdevs-pro/bm-products-import/
 Description: This plugin imports products from locals store
-Version: 0.7
+Version: 0.8
 Author: Magnific Soft
 Author URI: https://github.com/webdevs-pro/
 Text Domain:  bm-products-import
@@ -17,8 +17,9 @@ define('BM_PLUGIN_DIR', dirname( __FILE__ ));
 
 include( plugin_dir_path( __FILE__ ) . 'admin/admin.php');
 include( plugin_dir_path( __FILE__ ) . 'files.php');
-include( plugin_dir_path( __FILE__ ) . 'import.php');
-include( plugin_dir_path( __FILE__ ) . 'order.php');
+include( plugin_dir_path( __FILE__ ) . 'products-import.php');
+include( plugin_dir_path( __FILE__ ) . 'orders-import.php');
+include( plugin_dir_path( __FILE__ ) . 'orders-export.php');
 
 
 
@@ -93,57 +94,42 @@ function bm_deactivation() {
 
 
 
-// RAW PHP CODE PROTECTION 
-add_action('init', function() {
-	if( isset( $_GET['new_order']) ) {
-        $args = array(
-            'dok_id' => '29',
-            'numer_dokumentu' => '29',
-            'nr_seryjny_sklepu' => 'M33020CA93',
-            'data_zamowienia' => '2020-09-12',
-            'data_realizacji_zamowienia' => '2020-09-12',
-            'wymagac_pelnej_realizacji' => 'N',
-            'do_usuniecia' => 'N',
-            'magazyn_id' => '1',
-            'uzytkownik_id' => '1',
-            'poziom_cen' => '1',
-            'platnosc_id' => '1',
-            'dokument_finansowy' => 'Faktura sprzedaży',
-            'kontrahent_id' => '1',
-            'czy_nowy_kontrahent' => 'N',
-            'pozycje_zamowienia' => array(
-                array(
-                    'numer_pozycji' => '1',
-                    'towar_id' => '1341',
-                    'ilosc' => '1',
-                    'wartosc_brutto' => '',
-                ),
-                array(
-                    'numer_pozycji' => '2',
-                    'towar_id' => '1342',
-                    'ilosc' => '1',
-                    'wartosc_brutto' => '',
-                ),
-            ),
 
 
 
-        );
-		$export = new BM_XML_export_order($args);
-	}
-});
+
+add_action( 'woocommerce_created_customer', 'action_woocommerce_created_customer', 10, 3 ); 
+function action_woocommerce_created_customer( $customer_id, $new_customer_data, $password_generated ) { 
+
+}; 
 
 
-add_action( 'woocommerce_thankyou', 'new_order_custom_email_notification', 10, 1 );
 
-
-function new_order_custom_email_notification( $order_id ) {
+add_action( 'woocommerce_thankyou', 'new_order_export_xml', 10, 1 );
+function new_order_export_xml( $order_id ) {
 
     if ( ! $order_id ) return;
 
     if( ! get_post_meta( $order_id, '_thankyou_action_done', true ) ) {
 
+        // // Only for logged in users
+        // if ( $order_id && is_user_logged_in() ) {
+        //     $udata = wp_get_current_user();
+        //     $registered = new \DateTime($udata->user_registered);
+        //     $current = new \DateTime();
+
+        //     // get seconds elapsed after user registration
+        //     $interval = $current->format('U') - $registered->format('U');
+
+        //     if ($interval <= 30) {
+        //         // echo 'tracking code';
+        //     }
+        // }
+
+
         $order = wc_get_order( $order_id );
+
+        error_log( "woocommerce_thankyou order \n" . print_r($order, true) . "\n" );
 
         $args = array(
             'dok_id' => $order_id,
@@ -158,14 +144,97 @@ function new_order_custom_email_notification( $order_id ) {
             'poziom_cen' => '1',
             'platnosc_id' => '1',
             'dokument_finansowy' => 'Faktura sprzedaży',
-            'kontrahent_id' => '1',
-            'czy_nowy_kontrahent' => 'N',
             'pozycje_zamowienia' => array(),
         );
 
+        // registered customer
+        if ($order->get_customer_id() != 0) {
+
+            // new customer
+            $customer_orders = get_posts( array(
+                'numberposts' => 1,
+                'meta_key'    => '_customer_user',
+                'meta_value'  => $order->get_customer_id(),
+                'post_type'   => wc_get_order_types(),
+                'post_status' => array_keys( wc_get_order_statuses() ),
+            ) );
+
+            // new customer registered
+            if($customer_orders[0]->ID == $order_id) {
+
+                $args['czy_nowy_kontrahent'] = 'Y';
+                $args['kontrahent_id'] = '';
+                $args['nowy_kontrahent']['kod'] = $order->get_customer_id();
+
+            // existing customer
+            } else {
+
+                $args['czy_nowy_kontrahent'] = 'N';
+                $args['kontrahent_id'] = $order->get_customer_id();
+                $args['nowy_kontrahent']['kod'] = $order->get_customer_id();
+
+            }
+
+        // not registered customer     
+        } else {
+            $args['czy_nowy_kontrahent'] = 'NZ';
+
+        }
+
+        $order_data = $order->get_data();
+        $billing_first_name = $order_data['billing']['first_name'];
+        $billing_last_name = $order_data['billing']['last_name'];
+        $billing_city = $order_data['billing']['city'];
+        $billing_postcode = $order_data['billing']['postcode'];
+        $billing_address_1 = $order_data['billing']['address_1'];
+        $billing_email = $order_data['billing']['email'];
+        $billing_phone = $order_data['billing']['phone'];
+
+
+        $shipping_first_name = $order_data['shipping']['first_name'];
+        $shipping_last_name = $order_data['shipping']['last_name'];
+        $shipping_city = $order_data['shipping']['city'];
+        $shipping_postcode = $order_data['shipping']['postcode'];
+        $shipping_address_1 = $order_data['shipping']['address_1']; 
+
+        $customer_note = $order_data['customer_note'];
+        
+        if ($billing_first_name == $shipping_first_name &&
+        $billing_last_name == $shipping_last_name &&
+        $billing_city == $shipping_city &&
+        $billing_postcode == $shipping_postcode &&
+        $billing_address_1 == $shipping_address_1) {
+            $args['nowy_kontrahent']['czy_odbiorca'] = 'Y';
+        } else {
+            $args['nowy_kontrahent']['czy_odbiorca'] = 'N';
+        }
+        
+        
+        
+        
+
+        $args['nowy_kontrahent'] = array(
+            'nazwa' => $billing_first_name . ' ' . $billing_last_name,
+            'miejscowosc' => $billing_city,
+            'kod_pocztowy' => $billing_postcode,
+            'nazwa_ulicy' => $billing_address_1,
+            'email' => $billing_email,
+            'telefon' => $billing_phone,
+        );
+
+        $args['dane_dostawy'] = array(
+            'nazwa' => $shipping_first_name . ' ' . $shipping_last_name,
+            'miejscowosc' => $shipping_city,
+            'kod_pocztowy' => $shipping_postcode,
+            'nazwa_ulicy' => $shipping_address_1,
+        );
+
+        $args['opis_zamowienia']['komentarz'] = $customer_note;
 
         $index = 0;
         foreach ( $order->get_items() as $item_id => $item ) {
+
+            error_log( "item\n" . print_r($item, true) . "\n" );
 
             // $product_id = $item->get_product_id();
             // $variation_id = $item->get_variation_id();
@@ -181,11 +250,13 @@ function new_order_custom_email_notification( $order_id ) {
             // $somemeta = $item->get_meta( 'towar_id', true );
             // $type = $item->get_type();
 
+
             $args['pozycje_zamowienia'][$index] = array(
                 'numer_pozycji' => $index + 1,
                 'towar_id' => get_post_meta($item->get_product_id(), 'towar_id', true ),
                 'ilosc' => $item->get_quantity(),
-                'wartosc_brutto' => '',
+                'wartosc_brutto' => get_post_meta( $item->get_product_id(), '_regular_price', true),
+                'cena_po_rabacie' => get_post_meta( $item->get_product_id(), '_sale_price', true),
             );
 
             $index++;
@@ -194,11 +265,26 @@ function new_order_custom_email_notification( $order_id ) {
 
         }
 
-        error_log( "args\n" . print_r($args, true) . "\n" );
+        // error_log( "args\n" . print_r($args, true) . "\n" );
 
         update_post_meta( $order_id, '_thankyou_action_done', true );
 
-        $export = new BM_XML_export_order($args);
+        $export = new BM_XML_Export_Order($args);
 
     }
 }
+
+
+
+
+
+
+
+
+
+
+   
+
+             
+
+

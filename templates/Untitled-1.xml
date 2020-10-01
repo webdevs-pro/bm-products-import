@@ -1,0 +1,161 @@
+<dane>
+   <transmisja_id />
+   <dokumenty_zamowien>
+      <dokument_zamowienia>
+         <dok_id />
+         <numer_dokumentu />
+         <nr_sklepu />
+         <nr_seryjny_sklepu />
+         <data_zamowienia />
+         <data_realizacji_zamowienia />
+         <wymagac_pelnej_realizacji />
+         <do_usuniecia />
+         <magazyn_id />
+         <uzytkownik_id />
+         <poziom_cen />
+         <rabat_procentowy />
+         <kwota_netto />
+         <kwota_vat />
+         <kwota_brutto />
+         <kwota_do_zaplaty />
+         <platnosc_id />
+         <platnosc_w_dniach />
+         <termin_platnosci />
+         <czy_rozliczone />
+         <kwota_rozliczona />
+         <dokument_finansowy />
+         <rezerwacja_stanu_towarow />
+         <kontrahent_id />
+         <czy_nowy_kontrahent />
+         <nowy_kontrahent>
+            <czy_dostawca />
+            <czy_producent />
+            <czy_odbiorca />
+            <czy_staly_klient />
+            <czy_kontakt_staly />
+            <czy_kontakt_tymczasowy />
+            <cz_kontakt_umowa />
+            <czy_sklep_w_sieci />
+            <czy_osoba_fizyczna />
+            <platnik />
+            <nr_sklepu />
+            <nr_seryjny_sklepu />
+            <nazwa />
+            <nazwa_na_przelewie1 />
+            <nazwa_na_przelewie2 />
+            <skrot />
+            <miejscowosc />
+            <ulica />
+            <nazwa_ulicy />
+            <nr_domu />
+            <nr_lokalu />
+            <kod_pocztowy />
+            <poczta />
+            <wojewodztwo />
+            <powiat />
+            <gmina />
+            <kod_kraju />
+            <nazwa_kraju />
+            <nip />
+            <czynny_podatnik_VAT />
+            <data_sprawdzenia_czynny_podatnik_VAT />
+            <czynny_podatnik_UE />
+            <data_sprawdzenia_czynny_podatnik_UE />
+            <czynny_podatnik_non_UE />
+            <data_sprawdzenia_czynny_podatnik_non_UE />
+            <nr_konta />
+            <konto_zweryfikowane />
+            <telefon />
+            <fax />
+            <email />
+            <kod_kth />
+            <kod />
+            <nr_analityki />
+            <nr_karty_klienta />
+            <ma_u_nas_rabat />
+            <wiek />
+            <data_urodzenia />
+            <zgoda_na_przetw_d_os />
+            <realizuj_zam_przez />
+            <poziom_cen />
+            <płatnosc_id />
+            <termin_platnosci />
+            <osoby_upowaznione />
+            <adres_serwera_ftp />
+            <login_do_serwera />
+            <haslo_do_serwera />
+            <katalog_lokalny />
+            <katalog_zdalny />
+            <notatki />
+            <komentarz />
+            <uwagi />
+         </nowy_kontrahent>
+         <dane_dostawy>
+            <bez_zmian />
+            <nazwa_odbiorcy />
+            <miasto />
+            <ulica />
+            <nazwa_ulicy />
+            <numer_domu />
+            <numer_lokalu />
+            <kod_pocztowy />
+            <poczta />
+            <wojewodztwo />
+            <powiat />
+            <gmina />
+            <kod_kraju />
+            <rodzaj_dostawy />
+            <kurier_dostawy />
+            <koszt_dostawy />
+            <czy_pobranie />
+            <nr_rozliczeniowy />
+            <osoba_kontaktowa />
+            <telefon_kontaktowy />
+            <email_kontaktowy />
+         </dane_dostawy>
+         <dane_faktury_vat>
+            <bez_zmian />
+            <miasto />
+            <ulica />
+            <nazwa_ulicy />
+            <numer_domu />
+            <nr_lokalu />
+            <kod_pocztowy />
+            <poczta />
+            <wojewodztwo />
+            <powiat />
+            <gmina />
+            <Komentarz />
+         </dane_faktury_vat>
+         <opis_zamowienia>
+            <komentarz />
+            <dotyczy_dokumentu />
+            <tekst1 />
+            <tekst2 />
+            <tekst3 />
+            <tekst4 />
+            <tekst5 />
+            <tekst6 />
+            <tekst7 />
+            <tekst8 />
+            <tekst9 />
+            <tekst10 />
+         </opis_zamowienia>
+         <pozycje_zamowienia>
+            <pozycja_zamowienia>
+               <numer_pozycji />
+               <kod />
+               <towar_id />
+               <ilosc />
+               <il_opak_zbiorczych />
+               <cena_po_rabacie />
+               <rabat_procentowy />
+               <wartosc_netto />
+               <wartosc_brutto />
+               <komentarz1 />
+               <komentarz2 />
+            </pozycja_zamowienia>
+         </pozycje_zamowienia>
+      </dokument_zamowienia>
+   </dokumenty_zamowien>
+</dane>

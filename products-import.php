@@ -6,7 +6,7 @@
 *
 * @since 1.0.0
 */
-class BM_XML_Import {
+class BM_XML_Products_Import {
 
    public $file;
    public $uploads_dir;
@@ -108,7 +108,7 @@ class BM_XML_Import {
 
 
       // no more than 500 categories
-      if (count($imported_categories->asortyment) >= 500) {
+      if (count($imported_categories->asortyment) >= 2000) {
          $this->admin_notice('Too mutch categories', 'error');
          return false;          
       }
@@ -552,7 +552,7 @@ add_action( 'admin_init', function() {
 
    if (isset($_FILES['bm_uload_file']) && ($_FILES['bm_uload_file']['error'] == UPLOAD_ERR_OK)) {
 
-      $import = new BM_XML_Import($_FILES['bm_uload_file']['tmp_name']);
+      $import = new BM_XML_Products_Import($_FILES['bm_uload_file']['tmp_name']);
 
    }
 
