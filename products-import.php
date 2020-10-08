@@ -11,6 +11,7 @@ class BM_XML_Products_Import {
    public $file;
    public $uploads_dir;
    public $exclude_asortyments;
+   public $exclude_categories;
    
    // public $existing_categories;
 
@@ -20,8 +21,12 @@ class BM_XML_Products_Import {
       $before = microtime(true);
 
       $this->uploads_dir = wp_get_upload_dir();
+
       $this->exclude_asortyments = explode(',', get_option('bm_exclude_asortyments'));
       error_log( "exclude_asortyments\n" . print_r($this->exclude_asortyments, true) . "\n" );
+
+      $this->exclude_categories = explode(',', get_option('bm_exclude_categories'));
+      error_log( "exclude_categories\n" . print_r($this->exclude_categories, true) . "\n" );
 
 
       $this->file = $file;
@@ -107,7 +112,7 @@ class BM_XML_Products_Import {
       }
 
 
-      // no more than 500 categories
+      // no more than 2000 categories
       if (count($imported_categories->asortyment) >= 2000) {
          $this->admin_notice('Too mutch categories', 'error');
          return false;          
@@ -294,8 +299,15 @@ class BM_XML_Products_Import {
          $imported_product = json_decode(json_encode($imported_product), true);
          // error_log( "imported_product\n" . print_r($imported_product, true) . "\n" );
 
+         // ignore by assortyment
          if(in_array($imported_product['asortyment_id'], $this->exclude_asortyments)) {
             error_log('ignored product - ' . $imported_product['nazwa'] . ', asortyment_id - ' . $imported_product['asortyment_id']);
+            continue;
+         }
+
+         // ignore by category
+         if(in_array($imported_product['kategoria_id'], $this->exclude_categories)) {
+            error_log('ignored product - ' . $imported_product['nazwa'] . ', kategoria_id - ' . $imported_product['kategoria_id']);
             continue;
          }
 
@@ -311,8 +323,9 @@ class BM_XML_Products_Import {
          if (!empty($existing_product)) {
 
             // update existing product
-
             $existing_product_id = $existing_product[0]->get_id();
+
+
 
             // check to remove product
             if ($imported_product['do_usuniecia'] == 'N') { // UPDATE
@@ -439,7 +452,7 @@ class BM_XML_Products_Import {
          );
          $product_category = get_terms( 'product_cat', $args );
          error_log( "asortyment_id\n" . print_r($data['asortyment_id'], true) . "\n" );
-         error_log( "product_category\n" . print_r($product_category, true) . "\n" );
+         // error_log( "product_category\n" . print_r($product_category, true) . "\n" );
 
          // set category
          if(!empty($product_category)) { // if exist

@@ -96,10 +96,6 @@ class BM_XML_Orders_Import {
     public function import_orders($xml) {
 
 
-
-      error_log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-
-
       $orders = $xml->potwierdzenia;
 
       if (empty($orders)) {

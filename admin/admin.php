@@ -35,6 +35,7 @@ function bm_create_menu() {
 function register_bm_settings() {
    //register our settings
    register_setting( 'bm-settings-group', 'bm_exclude_asortyments' );
+   register_setting( 'bm-settings-group', 'bm_exclude_categories' );
    register_setting( 'bm-settings-group', 'bm_import_period' );
 
    if ( get_option('bm_import_period') === false ) {
@@ -75,15 +76,23 @@ function bm_settings_page() {
                </td>
             </tr>
 
-            <!-- RSS URL FIELD -->
+            <!-- EXCLUDE ASSORTYMENTS -->
             <tr valign="top">
                <th scope="row">Asortyments to exclude</th>
                <td>
                   <input id="bm_exclude_asortyments" type="text" name="bm_exclude_asortyments" value="<?php echo esc_attr( get_option('bm_exclude_asortyments') ); ?>" style="width: 100%;" autocomplete="off" />
                   <p><em>Comma separated list of asortyments to exlude from import. Will be ignored asortyments and products within asortyments.</em></p>
                </td>
-            </tr>         
+            </tr>     
 
+            <!-- EXCLUDE CATEGORIES -->
+            <tr valign="top">
+               <th scope="row">Categories to exclude</th>
+               <td>
+                  <input id="bm_exclude_categories" type="text" name="bm_exclude_categories" value="<?php echo esc_attr( get_option('bm_exclude_categories') ); ?>" style="width: 100%;" autocomplete="off" />
+                  <p><em>Comma separated list of categories to exlude from import. Will be ignored products within categories.</em></p>
+               </td>
+            </tr>   
 
          </table>
 

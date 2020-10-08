@@ -1,6 +1,10 @@
 BM Products Importer
 ====================================
 
+0.9
+-----
+- added categories to exclude from import
+
 0.7
 -----
 - added asortyments to exclude from import
