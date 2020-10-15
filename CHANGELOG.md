@@ -1,6 +1,11 @@
 BM Products Importer
 ====================================
 
+0.99
+-----
+- added tags import
+- added qty import (weight products)
+
 0.9
 -----
 - added categories to exclude from import

@@ -58,6 +58,7 @@ class BM_XML_Products_Import {
       } 
    
       $cat_result = $this->import_categories($xml);
+      $tag_result = $this->import_tags($xml);
       $products_result = $this->import_products($xml);
 
       error_log( "cat_result\n" . print_r($cat_result, true) . "\n" );
@@ -267,6 +268,120 @@ class BM_XML_Products_Import {
          
    }
 
+   public function import_tags($xml) {
+
+      // CREATE UPDATE PRODUCT TAGS
+      $imported_tags = $xml->wykazy->kategorie;
+
+      if (empty($imported_tags)) {
+         error_log('No kategorie to import');
+         return false;
+      }
+
+
+      // no more than 2000 tags
+      if (count($imported_tags->kategoria) >= 2000) {
+         $this->admin_notice('Too mutch categories', 'error');
+         return false;          
+      }
+
+   
+      foreach($imported_tags->kategoria as $imported_tag) {
+   
+         $imported_tag = json_decode(json_encode($imported_tag), true);
+
+         if(in_array($imported_tag['kategoria_id'], $this->exclude_categories)) {
+            error_log('ignored asortyment - ' . $imported_tag['nazwa_kategorii'] . ', kategoria_id - ' . $imported_tag['kategoria_id']);
+            continue;
+         }
+
+         $args = array(
+            'hide_empty' => false,
+            'number' => 1,
+            'meta_query' => array(
+               array(
+                  'key'         =>  'kategoria_id',
+                  'value'       =>  $imported_tag['kategoria_id'],
+                  'compare'     =>  '=='
+               )
+            ),
+         );
+         $existing_tag = get_terms( 'product_tag', $args );
+         // error_log( "existing_category\n" . print_r($existing_tag, true) . "\n" );
+
+   
+   
+         if(!empty($existing_tag)) {
+
+            if ($imported_tag['do_usuniecia'] == 'N') {
+   
+               // update existing category
+               $args = array(
+                  'name' => $imported_tag['nazwa_kategorii'],
+                  'slug' => '',
+               );
+               wp_update_term( $existing_tag[0]->term_id, 'product_tag', $args );
+               update_term_meta( $existing_tag[0]->term_id, 'kategoria_id', $imported_tag['kategoria_id']);
+
+               error_log('updated term ' . $imported_tag['nazwa_kategorii']);
+
+            } elseif ($imported_tag['do_usuniecia'] == 'Y') {
+
+               $deleted = wp_delete_term( $existing_tag[0]->term_id, 'product_tag' );
+               error_log('removed term - ' . $imported_tag['nazwa_kategorii']);
+               error_log( "removed term result\n" . print_r($deleted, true) . "\n");
+
+
+            }
+   
+         } else {
+   
+            // create new category
+            $term = wp_insert_term( 
+               $imported_tag['nazwa_kategorii'],
+               'product_tag', 
+               array(
+                  'description' => '',
+                  // 'parent'      => 0,
+                  'slug'        => '',
+               ) 
+            );
+            error_log( "wp_insert_term\n" . print_r($term, true) . "\n" );
+
+
+
+
+            
+            // if term exist but not has kategoria_id meta set
+            if ( is_wp_error($term) && $term->get_error_code() == "term_exists") {
+               $term_id = $term->get_error_data();
+               $term = array();
+               $term['term_id'] = $term_id;
+               error_log('--existing term without kategoria_id - ' . $imported_tag['nazwa_kategorii']);
+            } else {
+               // error_log('--some error, skip term ' . $imported_category['asortyment_nazwa']);
+               // error_log('skipped term name ' . $imported_category['asortyment_nazwa']);
+               // error_log( "skipped term\n" . print_r($term, true) . "\n" );
+               // continue;
+            }
+
+                // error_log('--some error, skip term ' . $imported_category['asortyment_nazwa']);
+               // error_log('skipped term name ' . $imported_category['asortyment_nazwa']);
+        
+            update_term_meta( $term['term_id'], 'kategoria_id', $imported_tag['kategoria_id']);
+   
+            error_log('created term - ' . $imported_tag['nazwa_kategorii'] . ', kategoria_id - ' . $imported_tag['kategoria_id']);
+            error_log( "created term\n" . print_r($term, true) . "\n");
+   
+         }
+   
+      }
+
+      return true;
+         
+   }
+
+
    /**
     * Import/update products.
     *
@@ -347,6 +462,10 @@ class BM_XML_Products_Import {
                      'cena_detal' => $imported_product['cena_detal'], 
                      'stock' => $imported_product['magazyny']['magazyn']['0']['stan_magazynu'], 
                      'sku' => $imported_product['kod'],
+                     'min_qty' => $imported_product['opis1'] ?: '',
+                     'qty_step' => $imported_product['opis2'] ?: '',
+                     'qty_exact' => $imported_product['opis3'] ?: '',
+                     'qty_label' => $imported_product['opis4'] ?: '',
                   )
                );
 
@@ -391,8 +510,15 @@ class BM_XML_Products_Import {
                   'cena_detal' => $imported_product['cena_detal'], 
                   'stock' => $imported_product['magazyny']['magazyn']['0']['stan_magazynu'], 
                   'sku' => $imported_product['kod'],
+                  'min_qty' => $imported_product['opis1'] ?: '',
+                  'qty_step' => $imported_product['opis2'] ?: '',
+                  'qty_exact' => $imported_product['opis3'] ?: '',
+                  'qty_label' => $imported_product['opis4'] ?: '',
                )
             );
+
+            
+
 
             error_log('created product ' . $imported_product['nazwa']);
 
@@ -430,6 +556,9 @@ class BM_XML_Products_Import {
       // $data['id'] - ID of product to set data
 
 
+      error_log( "data\n" . print_r($data, true) . "\n" );
+
+
       // set towar_id
       if (isset($data['towar_id']) && !is_array($data['towar_id'])) {
          update_post_meta( $data['id'], 'towar_id', $data['towar_id']); // set img_url meta field 
@@ -451,7 +580,7 @@ class BM_XML_Products_Import {
             ),
          );
          $product_category = get_terms( 'product_cat', $args );
-         error_log( "asortyment_id\n" . print_r($data['asortyment_id'], true) . "\n" );
+         // error_log( "asortyment_id\n" . print_r($data['asortyment_id'], true) . "\n" );
          // error_log( "product_category\n" . print_r($product_category, true) . "\n" );
 
          // set category
@@ -490,8 +619,18 @@ class BM_XML_Products_Import {
 
       // set stock
       if (isset($data['stock']) && !is_array($data['stock'])) {
+
          update_post_meta( $data['id'], '_manage_stock', 'yes');
          update_post_meta( $data['id'], '_stock', $data['stock'] ?: '');
+
+         if ($data['stock'] == "0") {
+            update_post_meta( $data['id'], '_stock_status', 'outofstock' );
+            wp_set_post_terms( $data['id'], 'outofstock', 'product_visibility', true );
+         } else {
+            update_post_meta( $data['id'], '_stock_status', 'instock' );   
+            wp_remove_object_terms( $data['id'], 'outofstock', 'product_visibility' );      
+         }
+
       }
 
       // set sku
@@ -499,6 +638,24 @@ class BM_XML_Products_Import {
          update_post_meta( $data['id'], '_sku', $data['sku'] ?: '');
       }
 
+
+      // set min qty
+      if (isset($data['min_qty']) && !is_array($data['min_qty'])) {
+         update_post_meta( $data['id'], '_alg_wc_pq_min', $data['min_qty']);
+      }
+      // set qty step
+      if (isset($data['qty_step']) && !is_array($data['qty_step'])) {
+         update_post_meta( $data['id'], '_alg_wc_pq_step', $data['qty_step']);
+      }
+      // set qty step
+      if (isset($data['qty_exact']) && !is_array($data['qty_exact'])) {
+         update_post_meta( $data['id'], '_alg_wc_pq_exact_qty_allowed', $data['qty_exact']);
+      }      
+      // set qty labels
+      if (isset($data['qty_label']) && !is_array($data['qty_label'])) {
+         update_post_meta( $data['id'], '_alg_wc_pq_qty_price_by_qty_unit_label_template_singular', $data['qty_label']);
+         update_post_meta( $data['id'], '_alg_wc_pq_qty_price_by_qty_unit_label_template_plural', $data['qty_label']);
+      }
     }
 
 
