@@ -1,5 +1,10 @@
 BM Products Importer
 ====================================
+1.0
+-----
+- release
+- fix: tags not added to product
+
 
 0.99
 -----

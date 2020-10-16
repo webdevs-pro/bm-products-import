@@ -458,6 +458,7 @@ class BM_XML_Products_Import {
                      'id' => $existing_product_id,
                      'towar_id' => $imported_product['towar_id'],
                      'asortyment_id' => $imported_product['asortyment_id'],
+                     'kategoria_id' => $imported_product['kategoria_id'],
                      'plik_zdjecia' => $imported_product['plik_zdjecia'],
                      'cena_detal' => $imported_product['cena_detal'], 
                      'stock' => $imported_product['magazyny']['magazyn']['0']['stan_magazynu'], 
@@ -506,6 +507,7 @@ class BM_XML_Products_Import {
                   'id' => $new_product_id,
                   'towar_id' => $imported_product['towar_id'],
                   'asortyment_id' => $imported_product['asortyment_id'],
+                  'kategoria_id' => $imported_product['kategoria_id'],
                   'plik_zdjecia' => $imported_product['plik_zdjecia'],
                   'cena_detal' => $imported_product['cena_detal'], 
                   'stock' => $imported_product['magazyny']['magazyn']['0']['stan_magazynu'], 
@@ -602,6 +604,49 @@ class BM_XML_Products_Import {
 
          }           
       }
+
+
+
+
+      // set product tag
+      if (isset($data['kategoria_id']) && !is_array($data['kategoria_id'])) {
+         $args = array(
+            'hide_empty' => false,
+            'number' => 1,
+            'meta_query' => array(
+               array(
+                  'key'         =>  'kategoria_id',
+                  'value'   => $data['kategoria_id'],
+                  'compare' => '=='
+               )
+            ),
+         );
+         $product_tag = get_terms( 'product_tag', $args );
+         // error_log( "kategoria_id\n" . print_r($data['kategoria_id'], true) . "\n" );
+         // error_log( "product_category\n" . print_r($product_tag, true) . "\n" );
+
+         // set category
+         if(!empty($product_tag)) { // if exist
+            wp_set_object_terms( $data['id'], $product_tag[0]->term_id, 'product_tag' );
+         } else { // create new category if not exist
+            $term = wp_insert_term( 
+               $data['kategoria_id'],
+               'product_tag', 
+               array(
+                  'description' => '',
+                  // 'parent'      => 0,
+                  'slug'        => '',
+               ) 
+            );   
+            update_term_meta( $term['term_id'], 'kategoria_id', $data['kategoria_id']);
+            wp_set_object_terms( $data['id'], $term['term_id'], 'product_tag' );   
+            error_log('new not existing tag created from product (temporary named by ID) ' . $data['kategoria_id']);
+
+         }           
+      }
+
+
+
 
       // set custom featured image
       if (isset($data['plik_zdjecia']) && !is_array($data['plik_zdjecia'])) {
