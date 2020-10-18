@@ -435,6 +435,21 @@ class BM_XML_Products_Import {
          );
          $existing_product = wc_get_products($args);
 
+         // set qty label
+         if($imported_product['jm_id'] == '1') {
+            $qty_label = 'szt';
+         } elseif ($imported_product['jm_id'] == '2') {
+            $qty_label = 'kg';
+         } elseif ($imported_product['jm_id'] == '3') {
+            $qty_label = 'opak';
+         } elseif ($imported_product['jm_id'] == '4') {
+            $qty_label = 'szt.';
+         } elseif ($imported_product['jm_id'] == '5') {
+            $qty_label = 'gram';
+         } else {
+            $qty_label = '';
+         }
+
          if (!empty($existing_product)) {
 
             // update existing product
@@ -466,7 +481,7 @@ class BM_XML_Products_Import {
                      'min_qty' => $imported_product['opis1'] ?: '',
                      'qty_step' => $imported_product['opis2'] ?: '',
                      'qty_exact' => $imported_product['opis3'] ?: '',
-                     'qty_label' => $imported_product['opis4'] ?: '',
+                     'qty_label' => $qty_label ?: '',
                   )
                );
 
@@ -501,10 +516,11 @@ class BM_XML_Products_Import {
             );
 
             wp_set_object_terms( $new_product_id, 'simple', 'product_type' ); // simple product
+            
 
             $this->set_product_data(
                array(
-                  'id' => $new_product_id,
+                  'id' => $existing_product_id,
                   'towar_id' => $imported_product['towar_id'],
                   'asortyment_id' => $imported_product['asortyment_id'],
                   'kategoria_id' => $imported_product['kategoria_id'],
@@ -515,7 +531,7 @@ class BM_XML_Products_Import {
                   'min_qty' => $imported_product['opis1'] ?: '',
                   'qty_step' => $imported_product['opis2'] ?: '',
                   'qty_exact' => $imported_product['opis3'] ?: '',
-                  'qty_label' => $imported_product['opis4'] ?: '',
+                  'qty_label' => $qty_label ?: '',
                )
             );
 
@@ -610,6 +626,7 @@ class BM_XML_Products_Import {
 
       // set product tag
       if (isset($data['kategoria_id']) && !is_array($data['kategoria_id'])) {
+
          $args = array(
             'hide_empty' => false,
             'number' => 1,

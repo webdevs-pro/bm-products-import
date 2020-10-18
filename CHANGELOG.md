@@ -1,5 +1,11 @@
 BM Products Importer
 ====================================
+
+1.1
+-----
+- Qty labels
+
+
 1.0
 -----
 - release
