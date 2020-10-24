@@ -1,6 +1,11 @@
 BM Products Importer
 ====================================
 
+1.3
+-----
+- More error logs added
+
+
 1.2
 -----
 - Bugfix

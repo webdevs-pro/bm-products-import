@@ -3,7 +3,7 @@
 Plugin Name: BM Products Importer 
 Plugin URI: https://github.com/webdevs-pro/bm-products-import/
 Description: This plugin imports products from locals store
-Version: 1.2
+Version: 1.3
 Author: Magnific Soft
 Author URI: https://github.com/webdevs-pro/
 Text Domain:  bm-products-import
@@ -234,7 +234,7 @@ function new_order_export_xml( $order_id ) {
         $index = 0;
         foreach ( $order->get_items() as $item_id => $item ) {
 
-            error_log( "item\n" . print_r($item, true) . "\n" );
+            // error_log( "item\n" . print_r($item, true) . "\n" );
 
             // $product_id = $item->get_product_id();
             // $variation_id = $item->get_variation_id();
@@ -265,7 +265,7 @@ function new_order_export_xml( $order_id ) {
 
         }
 
-        // error_log( "args\n" . print_r($args, true) . "\n" );
+        error_log( "ORDER EXPORT args\n" . print_r($args, true) . "\n" );
 
         update_post_meta( $order_id, '_thankyou_action_done', true );
 

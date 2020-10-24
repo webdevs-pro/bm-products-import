@@ -574,7 +574,7 @@ class BM_XML_Products_Import {
       // $data['id'] - ID of product to set data
 
 
-      error_log( "data\n" . print_r($data, true) . "\n" );
+      error_log( "set product data\n" . print_r($data, true) . "\n" );
 
 
       // set towar_id

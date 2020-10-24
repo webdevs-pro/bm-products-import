@@ -16,7 +16,7 @@ class BM_XML_Orders_Import {
 
    public function __construct($file) {
 
-      error_log('---- import start ----');
+      error_log('---- orders import start ----');
       $before = microtime(true);
 
       $this->uploads_dir = wp_get_upload_dir();
@@ -26,7 +26,7 @@ class BM_XML_Orders_Import {
 
       $after = microtime(true);
       error_log($after-$before);
-      error_log('---- import end ----');
+      error_log('---- orders import end ----');
       
    }
    
