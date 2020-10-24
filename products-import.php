@@ -520,7 +520,7 @@ class BM_XML_Products_Import {
 
             $this->set_product_data(
                array(
-                  'id' => $existing_product_id,
+                  'id' => $new_product_id,
                   'towar_id' => $imported_product['towar_id'],
                   'asortyment_id' => $imported_product['asortyment_id'],
                   'kategoria_id' => $imported_product['kategoria_id'],

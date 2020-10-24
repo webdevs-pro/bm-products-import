@@ -1,6 +1,11 @@
 BM Products Importer
 ====================================
 
+1.2
+-----
+- Bugfix
+
+
 1.1
 -----
 - Qty labels
