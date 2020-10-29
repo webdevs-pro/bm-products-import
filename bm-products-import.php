@@ -3,7 +3,7 @@
 Plugin Name: BM Products Importer 
 Plugin URI: https://github.com/webdevs-pro/bm-products-import/
 Description: This plugin imports products from locals store
-Version: 1.3
+Version: 1.4
 Author: Magnific Soft
 Author URI: https://github.com/webdevs-pro/
 Text Domain:  bm-products-import
@@ -89,7 +89,7 @@ function bm_check_new_products_fn() {
 
 register_deactivation_hook( __FILE__, 'bm_deactivation' );
 function bm_deactivation() {
-    wp_clear_scheduled_hook( 'bm_import_new_products' );
+    // wp_clear_scheduled_hook( 'bm_import_new_products' );
 } 
 
 

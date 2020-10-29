@@ -1,6 +1,10 @@
 BM Products Importer
 ====================================
 
+1.4
+-----
+- removed deactivation hook
+
 1.3
 -----
 - More error logs added
