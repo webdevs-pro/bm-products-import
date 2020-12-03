@@ -131,6 +131,8 @@ function bm_settings_page() {
 
 function bm_change_cron_after_save( $old_value, $new_value ) {
 
+   error_log('update_option_bm_import_period');
+
 	if ( $old_value != $new_value ) {
       // This value has been changed. Insert code here.
       error_log($old_value);

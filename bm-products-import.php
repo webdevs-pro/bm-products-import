@@ -105,7 +105,8 @@ function action_woocommerce_created_customer( $customer_id, $new_customer_data, 
 
 
 
-add_action( 'woocommerce_thankyou', 'new_order_export_xml', 10, 1 );
+// add_action( 'woocommerce_thankyou', 'new_order_export_xml', 10, 1 );
+add_action( 'woocommerce_new_order', 'new_order_export_xml', 10, 1 );
 function new_order_export_xml( $order_id ) {
 
     if ( ! $order_id ) return;
@@ -129,7 +130,7 @@ function new_order_export_xml( $order_id ) {
 
         $order = wc_get_order( $order_id );
 
-        error_log( "woocommerce_thankyou order \n" . print_r($order, true) . "\n" );
+        error_log( "woocommerce_new_order \n" . print_r($order, true) . "\n" );
 
         $args = array(
             'dok_id' => $order_id,

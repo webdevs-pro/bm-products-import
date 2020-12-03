@@ -1,6 +1,11 @@
 BM Products Importer
 ====================================
 
+1.5
+-----
+- imp_doc_0001
+- woocommerce_new_order hook
+
 1.4
 -----
 - removed deactivation hook

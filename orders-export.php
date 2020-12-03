@@ -49,7 +49,7 @@ class BM_XML_Export_Order {
       $formatxml->formatOutput = true;
       $formatxml->loadXML($xml->asXML());
 
-      $formatxml->save($uploads_dir['basedir'] . '/xml_import/' . 'imp_dok_0000_' . date('YmdHis') . '.xml');
+      $formatxml->save($uploads_dir['basedir'] . '/xml_import/' . 'imp_dok_0001_' . date('YmdHis') . '.xml');
 
    }
 
