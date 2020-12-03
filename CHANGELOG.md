@@ -1,6 +1,10 @@
 BM Products Importer
 ====================================
 
+1.6
+-----
+- woocommerce_new_order -> woocommerce_payment_complete !!!
+
 1.5
 -----
 - imp_doc_0001
