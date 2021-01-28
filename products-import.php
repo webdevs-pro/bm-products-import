@@ -481,6 +481,7 @@ class BM_XML_Products_Import {
                      'min_qty' => $imported_product['opis1'] ?: '',
                      'qty_step' => $imported_product['opis2'] ?: '',
                      'qty_exact' => $imported_product['opis3'] ?: '',
+                     'waga' => $imported_product['waga'] ?: '',
                      'qty_label' => $qty_label ?: '',
                   )
                );
@@ -531,6 +532,7 @@ class BM_XML_Products_Import {
                   'min_qty' => $imported_product['opis1'] ?: '',
                   'qty_step' => $imported_product['opis2'] ?: '',
                   'qty_exact' => $imported_product['opis3'] ?: '',
+                  'waga' => $imported_product['waga'] ?: '',
                   'qty_label' => $qty_label ?: '',
                )
             );
@@ -712,6 +714,10 @@ class BM_XML_Products_Import {
       // set qty step
       if (isset($data['qty_exact']) && !is_array($data['qty_exact'])) {
          update_post_meta( $data['id'], '_alg_wc_pq_exact_qty_allowed', $data['qty_exact']);
+      }      
+      // set weight
+      if (isset($data['waga']) && !is_array($data['waga'])) {
+         update_post_meta( $data['id'], '_weight', $data['waga']);
       }      
       // set qty labels
       if (isset($data['qty_label']) && !is_array($data['qty_label'])) {

@@ -1,6 +1,10 @@
 BM Products Importer
 ====================================
 
+1.7
+-----
+- added WC _weight field (waga)
+
 1.6
 -----
 - woocommerce_new_order -> woocommerce_payment_complete !!!
