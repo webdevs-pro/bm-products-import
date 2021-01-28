@@ -1,6 +1,10 @@
 BM Products Importer
 ====================================
 
+1.7.1
+-----
+- fix WC _weight field (il_kg_litrow)
+
 1.7
 -----
 - added WC _weight field (waga)
