@@ -37,6 +37,7 @@ function register_bm_settings() {
    register_setting( 'bm-settings-group', 'bm_exclude_asortyments' );
    register_setting( 'bm-settings-group', 'bm_exclude_categories' );
    register_setting( 'bm-settings-group', 'bm_import_period' );
+   register_setting( 'bm-settings-group', 'bm_wpmf_category' );
 
    if ( get_option('bm_import_period') === false ) {
       update_option( 'bm_import_period', '48' ); // default checked
@@ -93,6 +94,16 @@ function bm_settings_page() {
                   <p><em>Comma separated list of categories to exlude from import. Will be ignored products within categories.</em></p>
                </td>
             </tr>   
+
+            <!-- WPMF CATEGORY ID -->
+            <tr valign="top">
+               <th scope="row">WP Media Folder category</th>
+               <td>
+                  <input id="bm_wpmf_category" type="text" name="bm_wpmf_category" value="<?php echo esc_attr( get_option('bm_wpmf_category') ); ?>" style="width: 100%;" autocomplete="off" />
+                  <p><em>ID of the WP Media Folder category for images.</em></p>
+               </td>
+            </tr>   
+
 
          </table>
 

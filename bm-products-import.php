@@ -3,7 +3,7 @@
 Plugin Name: BM Products Importer 
 Plugin URI: https://github.com/webdevs-pro/bm-products-import/
 Description: This plugin imports products from locals store
-Version: 1.7.1
+Version: 1.8
 Author: Magnific Soft
 Author URI: https://github.com/webdevs-pro/
 Text Domain:  bm-products-import
@@ -278,15 +278,56 @@ function new_order_export_xml( $order_id ) {
 
 
 
+      
+// IMAGES UPLOD SCHEDULED ACTION
+add_action( 'bm_set_product_image_by_url', 'bm_set_product_image_by_url', 10, 3 );
+function bm_set_product_image_by_url($product_id, $img_name, $img_path) {
 
+    // remove current thumbnail
+    $current_thumbnail = get_post_thumbnail_id($product_id);
+    if($current_thumbnail) {
+        
+        error_log( "current_thumbnail \n" . print_r($current_thumbnail, true) . "\n" );
+        wp_delete_attachment( $current_thumbnail, 'true' );
+        error_log( "current thumbnail removed for \n" . print_r($product_id, true) . "\n" );
+    }
 
+    
+    require_once ABSPATH . 'wp-admin/includes/media.php';
+    require_once ABSPATH . 'wp-admin/includes/file.php';
+    require_once ABSPATH . 'wp-admin/includes/image.php';
 
+    $image_contents = file_get_contents($img_path);
+    $upload = wp_upload_bits( $img_name, null, $image_contents );
+ 
+    $wp_filetype = wp_check_filetype( basename( $upload['file'] ), null );
+ 
+    $upload = apply_filters( 'wp_handle_upload', array(
+       'file' => $upload['file'],
+       'url'  => $upload['url'],
+       'type' => $wp_filetype['type']
+    ), 'sideload' );
+ 
+    $attachment = array(
+       'post_mime_type'	=> $upload['type'],
+       'post_title'		=> get_the_title( $product_id ),
+       'post_content'		=> '',
+       'post_status'		=> 'inherit'
+    );
+ 
+    // generate attachment metadata
+    $attach_id = wp_insert_attachment( $attachment, $upload['file'], $product_id );
+    $attach_data = wp_generate_attachment_metadata( $attach_id, $upload['file'] );
+    wp_update_attachment_metadata( $attach_id, $attach_data );
 
+    // set product featured image
+    set_post_thumbnail( $product_id, $attach_id );
+    
+    // set WP Media Folder taxonomy term for uploaded image
+    $wpmf_term = get_option('bm_wpmf_category');
+    if ($wpmf_term) {
+       wp_set_object_terms( $attach_id, intval($wpmf_term), WPMF_TAXO, false);
+    }
 
-
-
-   
-
-             
-
+}
 

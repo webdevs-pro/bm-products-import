@@ -23,14 +23,16 @@ class BM_XML_Products_Import {
       $this->uploads_dir = wp_get_upload_dir();
 
       $this->exclude_asortyments = explode(',', get_option('bm_exclude_asortyments'));
-      error_log( "exclude_asortyments\n" . print_r($this->exclude_asortyments, true) . "\n" );
+      // error_log( "exclude_asortyments\n" . print_r($this->exclude_asortyments, true) . "\n" );
 
       $this->exclude_categories = explode(',', get_option('bm_exclude_categories'));
-      error_log( "exclude_categories\n" . print_r($this->exclude_categories, true) . "\n" );
+      // error_log( "exclude_categories\n" . print_r($this->exclude_categories, true) . "\n" );
 
 
       $this->file = $file;
       $this->import_from_xml_file($file);
+
+      // add_action('bm_set_product_image_by_url', [$this, 'set_product_image_by_url'], 10);
 
       $after = microtime(true);
       error_log($after-$before);
@@ -61,8 +63,8 @@ class BM_XML_Products_Import {
       $tag_result = $this->import_tags($xml);
       $products_result = $this->import_products($xml);
 
-      error_log( "cat_result\n" . print_r($cat_result, true) . "\n" );
-      error_log( "products_result\n" . print_r($products_result, true) . "\n" );
+      // error_log( "cat_result\n" . print_r($cat_result, true) . "\n" );
+      // error_log( "products_result\n" . print_r($products_result, true) . "\n" );
 
 
       if($cat_result || $products_result) {
@@ -486,13 +488,18 @@ class BM_XML_Products_Import {
                   )
                );
 
-               error_log('updated product ' . $imported_product['nazwa']);
+               // error_log('updated product ' . $imported_product['nazwa']);
 
             } elseif ($imported_product['do_usuniecia'] == 'Y') {
                
                $deleted = $this->delete_product($existing_product_id);
 
                if (!is_wp_error($deleted)) {
+                  // also remove product attachments
+                  $attachments = get_attached_media( '', $existing_product_id );
+                  foreach ($attachments as $attachment) {
+                    wp_delete_attachment( $attachment->ID, 'true' );
+                  }
                   error_log('deleted product ' . $imported_product['nazwa']);
                } else {
                   error_log('error deleting product ' . $imported_product['nazwa'] . '\n' . print_r($deleted, true));
@@ -576,7 +583,7 @@ class BM_XML_Products_Import {
       // $data['id'] - ID of product to set data
 
 
-      error_log( "set product data\n" . print_r($data, true) . "\n" );
+      // error_log( "set product data\n" . print_r($data, true) . "\n" );
 
 
       // set towar_id
@@ -670,10 +677,52 @@ class BM_XML_Products_Import {
       // set custom featured image
       if (isset($data['plik_zdjecia']) && !is_array($data['plik_zdjecia'])) {
          $img_url = $this->uploads_dir['baseurl'] . '/xml_import/product-images/' . $data['plik_zdjecia'];
-         update_post_meta( $data['id'], '_knawatfibu_url', array('img_url' => $img_url)); // set img_url meta field 
+         update_post_meta( $data['id'], '_knawatfibu_url', array('img_url' => $img_url) ); // set img_url meta field 
+
+
+
+
+
+
+
+         $img_path = $this->uploads_dir['basedir'] . '/xml_import/product-images/' . $data['plik_zdjecia'];
+         $img_timestamp = filemtime ( $img_path );
+
+         $pc_market_image = array(
+            'img' => $data['plik_zdjecia'],
+            'img_timestamp' => $img_timestamp,
+         );
+
+         if(get_post_meta($data['id'], '_pc_market_image', true) != $pc_market_image) {
+            // error_log('UPDATING IMAGE ------------------------------------------------');
+            update_post_meta( $data['id'], '_pc_market_image', array('img' => $data['plik_zdjecia'], 'img_timestamp' => $img_timestamp) );
+            $image_data = array(
+               'product_id' => $data['id'],
+               'file_name' => $data['plik_zdjecia'],
+               'file_path' => $img_path,
+            );
+            as_schedule_single_action( time() + 10, 'bm_set_product_image_by_url', $image_data ); // action scheduller job
+         } else {
+            // error_log('NOT UPDATING IMAGE *************************************************');
+         }
+   
+
+
+
+
+
+
+
+
+
       } else {
          update_post_meta( $data['id'], '_knawatfibu_url', ''); // clear img_url meta field 
+         update_post_meta( $data['id'], '_pc_market_image', array() );
       }
+
+
+
+
 
       // set price
       if (isset($data['cena_detal']) && !is_array($data['cena_detal'])) {
@@ -775,6 +824,7 @@ class BM_XML_Products_Import {
 
       return true;
    }
+
 
 }
 
