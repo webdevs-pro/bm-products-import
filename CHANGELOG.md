@@ -1,6 +1,14 @@
 BM Products Importer
 ====================================
 
+1.8.1
+-----
+- add wc_logger
+
+1.8
+-----
+- add featured images import
+
 1.7.1
 -----
 - fix WC _weight field (il_kg_litrow)

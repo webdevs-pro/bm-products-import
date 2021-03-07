@@ -3,7 +3,7 @@
 Plugin Name: BM Products Importer 
 Plugin URI: https://github.com/webdevs-pro/bm-products-import/
 Description: This plugin imports products from locals store
-Version: 1.8
+Version: 1.8.1
 Author: Magnific Soft
 Author URI: https://github.com/webdevs-pro/
 Text Domain:  bm-products-import
@@ -282,6 +282,9 @@ function new_order_export_xml( $order_id ) {
 // IMAGES UPLOD SCHEDULED ACTION
 add_action( 'bm_set_product_image_by_url', 'bm_set_product_image_by_url', 10, 3 );
 function bm_set_product_image_by_url($product_id, $img_name, $img_path) {
+
+    $log = new WC_Logger();
+    $log->info( 'Updating thumbnail for:' . wc_print_r( $product_id, true ) . ' "'.get_the_title($product_id).'"', array( 'source' => 'bm-products-import-images' ) );
 
     // remove current thumbnail
     $current_thumbnail = get_post_thumbnail_id($product_id);

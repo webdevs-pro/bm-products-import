@@ -12,12 +12,15 @@ class BM_XML_Products_Import {
    public $uploads_dir;
    public $exclude_asortyments;
    public $exclude_categories;
+   public $log;
    
    // public $existing_categories;
 
    public function __construct($file) {
 
-      error_log('---- import start ----');
+      $this->log = new WC_Logger();
+
+      $this->bm_log('---- IMPORT START --------------------------------------------------------------------------------------------------------');
       $before = microtime(true);
 
       $this->uploads_dir = wp_get_upload_dir();
@@ -35,9 +38,13 @@ class BM_XML_Products_Import {
       // add_action('bm_set_product_image_by_url', [$this, 'set_product_image_by_url'], 10);
 
       $after = microtime(true);
-      error_log($after-$before);
-      error_log('---- import end ----');
+      $this->bm_log($after-$before);
+      $this->bm_log('---- IMPORT END ----------------------------------------------------------------------------------------------------------');
       
+   }
+
+   public function bm_log($string) {
+      $this->log->info( $string, array( 'source' => 'bm-products-import' ) );
    }
    
 	/**
@@ -88,7 +95,7 @@ class BM_XML_Products_Import {
    public function admin_notice($notice_text, $notice_type) {
       if(is_admin() && !wp_doing_cron()) {
          add_settings_error('', '', $notice_text, $notice_type);
-         error_log($notice_text);
+         $this->bm_log($notice_text);
       }
       
    }
@@ -110,7 +117,7 @@ class BM_XML_Products_Import {
       $imported_categories = $xml->wykazy->asortymenty;
 
       if (empty($imported_categories)) {
-         error_log('No asortyments to import');
+         $this->bm_log('No asortyments to import');
          return false;
       }
 
@@ -127,7 +134,7 @@ class BM_XML_Products_Import {
          $imported_category = json_decode(json_encode($imported_category), true);
 
          if(in_array($imported_category['asortyment_id'], $this->exclude_asortyments)) {
-            error_log('ignored asortyment - ' . $imported_category['asortyment_nazwa'] . ', asortyment_id - ' . $imported_category['asortyment_id']);
+            $this->bm_log('ignored asortyment - ' . $imported_category['asortyment_nazwa'] . ', asortyment_id - ' . $imported_category['asortyment_id']);
             continue;
          }
 
@@ -160,13 +167,13 @@ class BM_XML_Products_Import {
                update_term_meta( $existing_category[0]->term_id, 'asortyment_id', $imported_category['asortyment_id']);
                update_term_meta( $existing_category[0]->term_id, 'pod_asortymenty', array_shift($imported_category['pod_asortymenty']));
       
-               error_log('updated term ' . $imported_category['asortyment_nazwa']);
+               $this->bm_log('updated term ' . $imported_category['asortyment_nazwa']);
 
             } elseif ($imported_category['do_usuniecia'] == 'Y') {
 
                $deleted = wp_delete_term( $existing_category[0]->term_id, 'product_cat' );
-               error_log('removed term - ' . $imported_category['asortyment_nazwa']);
-               error_log( "removed term result\n" . print_r($deleted, true) . "\n");
+               $this->bm_log('removed term - ' . $imported_category['asortyment_nazwa']);
+               $this->bm_log( "removed term result\n" . print_r($deleted, true) . "\n");
 
 
             }
@@ -183,7 +190,7 @@ class BM_XML_Products_Import {
                   'slug'        => '',
                ) 
             );
-            error_log( "wp_insert_term\n" . print_r($term, true) . "\n" );
+            $this->bm_log( "wp_insert_term\n" . print_r($term, true) . "\n" );
 
 
 
@@ -194,7 +201,7 @@ class BM_XML_Products_Import {
                $term_id = $term->get_error_data();
                $term = array();
                $term['term_id'] = $term_id;
-               error_log('--existing term without asortyment_id - ' . $imported_category['asortyment_nazwa']);
+               $this->bm_log('--existing term without asortyment_id - ' . $imported_category['asortyment_nazwa']);
             } else {
                // error_log('--some error, skip term ' . $imported_category['asortyment_nazwa']);
                // error_log('skipped term name ' . $imported_category['asortyment_nazwa']);
@@ -205,8 +212,8 @@ class BM_XML_Products_Import {
             update_term_meta( $term['term_id'], 'asortyment_id', $imported_category['asortyment_id']);
             update_term_meta( $term['term_id'], 'pod_asortymenty', array_shift($imported_category['pod_asortymenty']));
    
-            error_log('created term - ' . $imported_category['asortyment_nazwa'] . ', asortyment_id - ' . $imported_category['asortyment_id']);
-            error_log( "created term\n" . print_r($term, true) . "\n");
+            $this->bm_log('created term - ' . $imported_category['asortyment_nazwa'] . ', asortyment_id - ' . $imported_category['asortyment_id']);
+            $this->bm_log( "created term\n" . print_r($term, true) . "\n");
    
          }
    
@@ -256,7 +263,7 @@ class BM_XML_Products_Import {
    
                wp_update_term( $child_category_obj[0]->term_id, 'product_cat', array('parent' => $parent_category->term_id));
    
-               error_log('updated term parent ' . $child_category_obj[0]->term_id);
+               $this->bm_log('updated term parent ' . $child_category_obj[0]->term_id);
    
                add_action('edited_product_cat', 'bm_save_taxonomy_custom_meta', 10, 1);
    
@@ -276,7 +283,7 @@ class BM_XML_Products_Import {
       $imported_tags = $xml->wykazy->kategorie;
 
       if (empty($imported_tags)) {
-         error_log('No kategorie to import');
+         $this->bm_log('No kategorie to import');
          return false;
       }
 
@@ -293,7 +300,7 @@ class BM_XML_Products_Import {
          $imported_tag = json_decode(json_encode($imported_tag), true);
 
          if(in_array($imported_tag['kategoria_id'], $this->exclude_categories)) {
-            error_log('ignored asortyment - ' . $imported_tag['nazwa_kategorii'] . ', kategoria_id - ' . $imported_tag['kategoria_id']);
+            $this->bm_log('ignored asortyment - ' . $imported_tag['nazwa_kategorii'] . ', kategoria_id - ' . $imported_tag['kategoria_id']);
             continue;
          }
 
@@ -325,13 +332,13 @@ class BM_XML_Products_Import {
                wp_update_term( $existing_tag[0]->term_id, 'product_tag', $args );
                update_term_meta( $existing_tag[0]->term_id, 'kategoria_id', $imported_tag['kategoria_id']);
 
-               error_log('updated term ' . $imported_tag['nazwa_kategorii']);
+               $this->bm_log('updated term ' . $imported_tag['nazwa_kategorii']);
 
             } elseif ($imported_tag['do_usuniecia'] == 'Y') {
 
                $deleted = wp_delete_term( $existing_tag[0]->term_id, 'product_tag' );
-               error_log('removed term - ' . $imported_tag['nazwa_kategorii']);
-               error_log( "removed term result\n" . print_r($deleted, true) . "\n");
+               $this->bm_log('removed term - ' . $imported_tag['nazwa_kategorii']);
+               $this->bm_log( "removed term result\n" . print_r($deleted, true) . "\n");
 
 
             }
@@ -348,7 +355,7 @@ class BM_XML_Products_Import {
                   'slug'        => '',
                ) 
             );
-            error_log( "wp_insert_term\n" . print_r($term, true) . "\n" );
+            $this->bm_log( "wp_insert_term\n" . print_r($term, true) . "\n" );
 
 
 
@@ -359,7 +366,7 @@ class BM_XML_Products_Import {
                $term_id = $term->get_error_data();
                $term = array();
                $term['term_id'] = $term_id;
-               error_log('--existing term without kategoria_id - ' . $imported_tag['nazwa_kategorii']);
+               $this->bm_log('--existing term without kategoria_id - ' . $imported_tag['nazwa_kategorii']);
             } else {
                // error_log('--some error, skip term ' . $imported_category['asortyment_nazwa']);
                // error_log('skipped term name ' . $imported_category['asortyment_nazwa']);
@@ -372,8 +379,8 @@ class BM_XML_Products_Import {
         
             update_term_meta( $term['term_id'], 'kategoria_id', $imported_tag['kategoria_id']);
    
-            error_log('created term - ' . $imported_tag['nazwa_kategorii'] . ', kategoria_id - ' . $imported_tag['kategoria_id']);
-            error_log( "created term\n" . print_r($term, true) . "\n");
+            $this->bm_log('created term - ' . $imported_tag['nazwa_kategorii'] . ', kategoria_id - ' . $imported_tag['kategoria_id']);
+            $this->bm_log( "created term\n" . print_r($term, true) . "\n");
    
          }
    
@@ -418,13 +425,13 @@ class BM_XML_Products_Import {
 
          // ignore by assortyment
          if(in_array($imported_product['asortyment_id'], $this->exclude_asortyments)) {
-            error_log('ignored product - ' . $imported_product['nazwa'] . ', asortyment_id - ' . $imported_product['asortyment_id']);
+            $this->bm_log('ignored product - ' . $imported_product['nazwa'] . ', asortyment_id - ' . $imported_product['asortyment_id']);
             continue;
          }
 
          // ignore by category
          if(in_array($imported_product['kategoria_id'], $this->exclude_categories)) {
-            error_log('ignored product - ' . $imported_product['nazwa'] . ', kategoria_id - ' . $imported_product['kategoria_id']);
+            $this->bm_log('ignored product - ' . $imported_product['nazwa'] . ', kategoria_id - ' . $imported_product['kategoria_id']);
             continue;
          }
 
@@ -488,7 +495,8 @@ class BM_XML_Products_Import {
                   )
                );
 
-               // error_log('updated product ' . $imported_product['nazwa']);
+               $this->bm_log('updated product ('.$imported_product['kod'].') - ' . $imported_product['nazwa']);
+
 
             } elseif ($imported_product['do_usuniecia'] == 'Y') {
                
@@ -500,9 +508,9 @@ class BM_XML_Products_Import {
                   foreach ($attachments as $attachment) {
                     wp_delete_attachment( $attachment->ID, 'true' );
                   }
-                  error_log('deleted product ' . $imported_product['nazwa']);
+                  $this->bm_log('deleted product ' . $imported_product['nazwa']);
                } else {
-                  error_log('error deleting product ' . $imported_product['nazwa'] . '\n' . print_r($deleted, true));
+                  $this->bm_log('error deleting product ' . $imported_product['nazwa'] . '\n' . print_r($deleted, true));
                }
 
             }
@@ -547,7 +555,7 @@ class BM_XML_Products_Import {
             
 
 
-            error_log('created product ' . $imported_product['nazwa']);
+            $this->bm_log('created product ('.$imported_product['kod'].') - ' . $imported_product['nazwa']);
 
          }
 
