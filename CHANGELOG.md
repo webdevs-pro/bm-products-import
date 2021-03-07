@@ -1,6 +1,10 @@
 BM Products Importer
 ====================================
 
+1.8.2
+-----
+- check image file exist
+
 1.8.1
 -----
 - add wc_logger

@@ -3,7 +3,7 @@
 Plugin Name: BM Products Importer 
 Plugin URI: https://github.com/webdevs-pro/bm-products-import/
 Description: This plugin imports products from locals store
-Version: 1.8.1
+Version: 1.8.2
 Author: Magnific Soft
 Author URI: https://github.com/webdevs-pro/
 Text Domain:  bm-products-import
@@ -281,18 +281,16 @@ function new_order_export_xml( $order_id ) {
       
 // IMAGES UPLOD SCHEDULED ACTION
 add_action( 'bm_set_product_image_by_url', 'bm_set_product_image_by_url', 10, 3 );
-function bm_set_product_image_by_url($product_id, $img_name, $img_path) {
+function bm_set_product_image_by_url( $product_id, $img_name, $img_path ) {
 
     $log = new WC_Logger();
-    $log->info( 'Updating thumbnail for:' . wc_print_r( $product_id, true ) . ' "'.get_the_title($product_id).'"', array( 'source' => 'bm-products-import-images' ) );
+    
 
     // remove current thumbnail
-    $current_thumbnail = get_post_thumbnail_id($product_id);
-    if($current_thumbnail) {
-        
-        error_log( "current_thumbnail \n" . print_r($current_thumbnail, true) . "\n" );
+    $current_thumbnail = get_post_thumbnail_id( $product_id );
+    if ( $current_thumbnail ) {
         wp_delete_attachment( $current_thumbnail, 'true' );
-        error_log( "current thumbnail removed for \n" . print_r($product_id, true) . "\n" );
+        $log->info( 'Removed old thumbnail for:' . wc_print_r( $product_id, true ) . ' "' . get_the_title( $product_id ).'"', array( 'source' => 'bm-products-import-images' ) );
     }
 
     
@@ -300,7 +298,7 @@ function bm_set_product_image_by_url($product_id, $img_name, $img_path) {
     require_once ABSPATH . 'wp-admin/includes/file.php';
     require_once ABSPATH . 'wp-admin/includes/image.php';
 
-    $image_contents = file_get_contents($img_path);
+    $image_contents = file_get_contents( $img_path );
     $upload = wp_upload_bits( $img_name, null, $image_contents );
  
     $wp_filetype = wp_check_filetype( basename( $upload['file'] ), null );
@@ -327,10 +325,17 @@ function bm_set_product_image_by_url($product_id, $img_name, $img_path) {
     set_post_thumbnail( $product_id, $attach_id );
     
     // set WP Media Folder taxonomy term for uploaded image
-    $wpmf_term = get_option('bm_wpmf_category');
-    if ($wpmf_term) {
-       wp_set_object_terms( $attach_id, intval($wpmf_term), WPMF_TAXO, false);
+    $wpmf_term = get_option( 'bm_wpmf_category' );
+    if ( $wpmf_term ) {
+       wp_set_object_terms( $attach_id, intval( $wpmf_term ), WPMF_TAXO, false );
     }
+
+    $log_arr = array(
+        'upload' => $upload,
+        // 'attachment' => $attachment,
+    );
+
+    $log->info( 'Uploaded thumbnail for:' . wc_print_r( $product_id, true ) . ' "' . get_the_title( $product_id ).'"' . wc_print_r( $log_arr, true ), array( 'source' => 'bm-products-import-images' ) );
 
 }
 

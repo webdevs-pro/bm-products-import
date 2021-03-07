@@ -684,8 +684,8 @@ class BM_XML_Products_Import {
 
       // set custom featured image
       if (isset($data['plik_zdjecia']) && !is_array($data['plik_zdjecia'])) {
-         $img_url = $this->uploads_dir['baseurl'] . '/xml_import/product-images/' . $data['plik_zdjecia'];
-         update_post_meta( $data['id'], '_knawatfibu_url', array('img_url' => $img_url) ); // set img_url meta field 
+         // $img_url = $this->uploads_dir['baseurl'] . '/xml_import/product-images/' . $data['plik_zdjecia'];
+         // update_post_meta( $data['id'], '_knawatfibu_url', array('img_url' => $img_url) ); // set img_url meta field 
 
 
 
@@ -694,26 +694,36 @@ class BM_XML_Products_Import {
 
 
          $img_path = $this->uploads_dir['basedir'] . '/xml_import/product-images/' . $data['plik_zdjecia'];
-         $img_timestamp = filemtime ( $img_path );
 
-         $pc_market_image = array(
-            'img' => $data['plik_zdjecia'],
-            'img_timestamp' => $img_timestamp,
-         );
+         if ( file_exists( $img_path ) ) {
 
-         if(get_post_meta($data['id'], '_pc_market_image', true) != $pc_market_image) {
-            // error_log('UPDATING IMAGE ------------------------------------------------');
-            update_post_meta( $data['id'], '_pc_market_image', array('img' => $data['plik_zdjecia'], 'img_timestamp' => $img_timestamp) );
-            $image_data = array(
-               'product_id' => $data['id'],
-               'file_name' => $data['plik_zdjecia'],
-               'file_path' => $img_path,
+            // process file
+
+            $img_timestamp = filemtime ( $img_path );
+
+            $pc_market_image = array(
+               'img' => $data['plik_zdjecia'],
+               'img_timestamp' => $img_timestamp,
             );
-            as_schedule_single_action( time() + 10, 'bm_set_product_image_by_url', $image_data ); // action scheduller job
-         } else {
-            // error_log('NOT UPDATING IMAGE *************************************************');
+
+            if ( get_post_meta( $data['id'], '_pc_market_image', true) != $pc_market_image ) {
+
+               // error_log('UPDATING IMAGE ------------------------------------------------');
+               update_post_meta( $data['id'], '_pc_market_image', array( 'img' => $data['plik_zdjecia'], 'img_timestamp' => $img_timestamp ) );
+               $image_data = array(
+                  'product_id' => $data['id'],
+                  'file_name' => $data['plik_zdjecia'],
+                  'file_path' => $img_path,
+               );
+               as_schedule_single_action( time() + 10, 'bm_set_product_image_by_url', $image_data ); // action scheduller job
+
+            }
+
+            // file not exist
+
+            $this->bm_log( '********************** IMAGE FILE NOT EXIST ('.$data['plik_zdjecia'].') ****************************' );
+
          }
-   
 
 
 
@@ -724,7 +734,7 @@ class BM_XML_Products_Import {
 
 
       } else {
-         update_post_meta( $data['id'], '_knawatfibu_url', ''); // clear img_url meta field 
+         // update_post_meta( $data['id'], '_knawatfibu_url', ''); // clear img_url meta field 
          update_post_meta( $data['id'], '_pc_market_image', array() );
       }
 
