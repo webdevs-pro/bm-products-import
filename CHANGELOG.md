@@ -1,6 +1,10 @@
 BM Products Importer
 ====================================
 
+1.8.3
+-----
+- images uploads fixes
+
 1.8.2
 -----
 - check image file exist

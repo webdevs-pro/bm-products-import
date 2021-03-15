@@ -495,7 +495,7 @@ class BM_XML_Products_Import {
                   )
                );
 
-               $this->bm_log('updated product ('.$imported_product['kod'].') - ' . $imported_product['nazwa']);
+               $this->bm_log('updated product ('.$imported_product['kod'].') ' . $imported_product['nazwa']);
 
 
             } elseif ($imported_product['do_usuniecia'] == 'Y') {
@@ -577,22 +577,6 @@ class BM_XML_Products_Import {
     * @return boolean
     */
     public function set_product_data($data) {
-
-      // $data['id'] - ID of product in WP
-      // $data['towar_id'] - ID of product in PCMarket24
-      // $data['asortyment_id'] - ID of category to set to product
-      // $data['plik_zdjecia'] - image file name to set as featured (plugin https://wordpress.org/plugins/featured-image-by-url/)
-      // $data['cena_detal'] - product price
-
-
-      // $data['id'] - ID of product to set data
-      // $data['id'] - ID of product to set data
-      // $data['id'] - ID of product to set data
-      // $data['id'] - ID of product to set data
-
-
-      // error_log( "set product data\n" . print_r($data, true) . "\n" );
-
 
       // set towar_id
       if (isset($data['towar_id']) && !is_array($data['towar_id'])) {
@@ -682,47 +666,50 @@ class BM_XML_Products_Import {
 
 
 
-      // set custom featured image
+      // set featured image
       if (isset($data['plik_zdjecia']) && !is_array($data['plik_zdjecia'])) {
-         // $img_url = $this->uploads_dir['baseurl'] . '/xml_import/product-images/' . $data['plik_zdjecia'];
-         // update_post_meta( $data['id'], '_knawatfibu_url', array('img_url' => $img_url) ); // set img_url meta field 
-
-
-
-
-
-
 
          $img_path = $this->uploads_dir['basedir'] . '/xml_import/product-images/' . $data['plik_zdjecia'];
 
          if ( file_exists( $img_path ) ) {
 
             // process file
-
             $img_timestamp = filemtime ( $img_path );
-
             $pc_market_image = array(
                'img' => $data['plik_zdjecia'],
                'img_timestamp' => $img_timestamp,
             );
 
+            // upload new image if file name or date changed
             if ( get_post_meta( $data['id'], '_pc_market_image', true) != $pc_market_image ) {
 
-               // error_log('UPDATING IMAGE ------------------------------------------------');
-               update_post_meta( $data['id'], '_pc_market_image', array( 'img' => $data['plik_zdjecia'], 'img_timestamp' => $img_timestamp ) );
-               $image_data = array(
-                  'product_id' => $data['id'],
-                  'file_name' => $data['plik_zdjecia'],
-                  'file_path' => $img_path,
-               );
-               as_schedule_single_action( time() + 10, 'bm_set_product_image_by_url', $image_data ); // action scheduller job
+                  // error_log('UPDATING IMAGE ------------------------------------------------');
+                  update_post_meta( $data['id'], '_pc_market_image', array( 'img' => $data['plik_zdjecia'], 'img_timestamp' => $img_timestamp ) );
+                  $image_data = array(
+                     'product_id' => $data['id'],
+                     'file_name' => $data['plik_zdjecia'],
+                     'file_path' => $img_path,
+                     'sku' => $data['sku'],
+                     // 'file_url' => $this->uploads_dir['baseurl'] . '/xml_import/product-images/' . $data['plik_zdjecia'],
+                  );
+                  $this->bm_log( '********************** SCHEDULE UPLOADING ('.wc_print_r( $image_data, true ).') ****************************' );
+                  as_schedule_single_action( time() + 10, 'bm_set_product_image_by_url', $image_data ); // action scheduller job
 
             }
 
+         
+         } else {
+            
             // file not exist
+            $image_data = array(
+               'product_id' => $data['id'],
+               'file_name' => $data['plik_zdjecia'],
+               'file_path' => $this->uploads_dir['basedir'] . '/xml_import/product-images/' . $data['plik_zdjecia'],
+               'sku' => $data['sku'],
+               'file_url' => $this->uploads_dir['baseurl'] . '/xml_import/product-images/' . $data['plik_zdjecia'],
+            );
 
-            $this->bm_log( '********************** IMAGE FILE NOT EXIST ('.$data['plik_zdjecia'].') ****************************' );
-
+            $this->bm_log( '********************** IMAGE FILE NOT EXIST ('.wc_print_r( $image_data, true ).') ****************************' );
          }
 
 

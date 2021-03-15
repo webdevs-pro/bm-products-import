@@ -3,7 +3,7 @@
 Plugin Name: BM Products Importer 
 Plugin URI: https://github.com/webdevs-pro/bm-products-import/
 Description: This plugin imports products from locals store
-Version: 1.8.2
+Version: 1.8.3
 Author: Magnific Soft
 Author URI: https://github.com/webdevs-pro/
 Text Domain:  bm-products-import
@@ -279,9 +279,10 @@ function new_order_export_xml( $order_id ) {
 
 
       
-// IMAGES UPLOD SCHEDULED ACTION
-add_action( 'bm_set_product_image_by_url', 'bm_set_product_image_by_url', 10, 3 );
-function bm_set_product_image_by_url( $product_id, $img_name, $img_path ) {
+// IMAGES UPLOAD SCHEDULED ACTION
+add_action( 'bm_set_product_image_by_url', 'bm_set_product_image_by_url', 10, 4 );
+function bm_set_product_image_by_url( $product_id, $img_name, $img_path, $sku ) {
+    
 
     $log = new WC_Logger();
     
@@ -290,8 +291,23 @@ function bm_set_product_image_by_url( $product_id, $img_name, $img_path ) {
     $current_thumbnail = get_post_thumbnail_id( $product_id );
     if ( $current_thumbnail ) {
         wp_delete_attachment( $current_thumbnail, 'true' );
-        $log->info( 'Removed old thumbnail for:' . wc_print_r( $product_id, true ) . ' "' . get_the_title( $product_id ).'"', array( 'source' => 'bm-products-import-images' ) );
+        $log->info( 'Removed old thumbnail for: (' . wc_print_r( $sku, true ) . ') ' . get_the_title( $product_id ), array( 'source' => 'bm-products-import-images' ) );
     }
+
+
+
+
+    // $wp_filetype = wp_check_filetype( $img_name );
+    // $log->info( 'img_name:' . wc_print_r( $img_name, true ), array( 'source' => 'bm-products-import-images' ) );
+    // $log->info( 'wp_filetype:' . wc_print_r( $wp_filetype, true ), array( 'source' => 'bm-products-import-images' ) );
+
+
+
+    
+    // $log->info( 'wp_get_current_user' . wc_print_r( wp_get_current_user(), true ), array( 'source' => 'bm-products-import-images' ) );
+
+
+
 
     
     require_once ABSPATH . 'wp-admin/includes/media.php';
@@ -300,6 +316,7 @@ function bm_set_product_image_by_url( $product_id, $img_name, $img_path ) {
 
     $image_contents = file_get_contents( $img_path );
     $upload = wp_upload_bits( $img_name, null, $image_contents );
+    // $log->info( 'upload 1:' . wc_print_r( $upload, true ), array( 'source' => 'bm-products-import-images' ) );
  
     $wp_filetype = wp_check_filetype( basename( $upload['file'] ), null );
  
@@ -308,6 +325,7 @@ function bm_set_product_image_by_url( $product_id, $img_name, $img_path ) {
        'url'  => $upload['url'],
        'type' => $wp_filetype['type']
     ), 'sideload' );
+    // $log->info( 'upload 2:' . wc_print_r( $upload, true ), array( 'source' => 'bm-products-import-images' ) );
  
     $attachment = array(
        'post_mime_type'	=> $upload['type'],
@@ -331,11 +349,40 @@ function bm_set_product_image_by_url( $product_id, $img_name, $img_path ) {
     }
 
     $log_arr = array(
-        'upload' => $upload,
+        // 'img_path' => $img_path,
+        'upload' => $upload['url'],
+        'sku' => $sku,
         // 'attachment' => $attachment,
+        // 'attach_data' => $attach_data,
     );
 
-    $log->info( 'Uploaded thumbnail for:' . wc_print_r( $product_id, true ) . ' "' . get_the_title( $product_id ).'"' . wc_print_r( $log_arr, true ), array( 'source' => 'bm-products-import-images' ) );
-
+    $log->info( 'Uploaded thumbnail for: (' . wc_print_r( $sku, true ) . ') ' . get_the_title( $product_id ) . ' ' . wc_print_r( $log_arr, true ), array( 'source' => 'bm-products-import-images' ) );
+    
+    
 }
 
+function custom_action_scheduler_failed_action( $action_id, $timeout ){ 
+
+    $log = new WC_Logger();
+    
+    $arr = array(
+        'action_id' => $action_id,
+        'timeout' => $timeout,
+    );
+    
+    if ( class_exists( 'ActionScheduler' ) ) {
+        $arr['action'] = ActionScheduler::store()->fetch_action( $action_id );
+    }
+    $log->info( '******************* ERROR *******************:' . wc_print_r( $arr, true ), array( 'source' => 'bm-products-import' ) );
+
+} 
+ 
+ //add the action 
+ add_action('action_scheduler_failed_action', 'custom_action_scheduler_failed_action', 10, 2);
+ 
+
+// if ( class_exists( 'ActionScheduler' ) ) {
+//     error_log( "ActionScheduler exist\n" );
+// } else {
+//     error_log( "ActionScheduler not exist\n" );
+// }
