@@ -79,6 +79,16 @@ function bm_activation() {
    //      error_log($timestamp);
    //  }
 }
+
+$period = intval( get_option('bm_import_period') );
+if ( ! wp_next_scheduled ( 'bm_import_new_products' ) && intval( $period ) != 0 ) {
+    wp_schedule_event( time(), $period . '_min', 'bm_import_new_products' );
+    // $timestamp = wp_next_scheduled( 'bm_import_new_products' );
+    error_log( "ALARM !!!!!!!!!!!!!!!!!!!!  bm_import_new_products rescheduled !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" );
+}
+
+
+
  
 add_action('bm_import_new_products', 'bm_check_new_products_fn');
 function bm_check_new_products_fn() {
