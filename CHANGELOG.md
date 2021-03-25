@@ -1,6 +1,10 @@
 BM Products Importer
 ====================================
 
+1.8.4
+-----
+- added tag column `kategoria_id`
+
 1.8.3
 -----
 - images uploads fixes
