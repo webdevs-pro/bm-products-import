@@ -66,9 +66,11 @@ class BM_XML_Products_Import {
          $this->admin_notice('Failed loading XML', 'error');
       } 
    
-      $cat_result = $this->import_categories($xml);
-      $tag_result = $this->import_tags($xml);
-      $products_result = $this->import_products($xml);
+      $cat_result = $this->import_categories( $xml );
+      $tag_result = $this->import_tags( $xml );
+      $parameters_result = $this->import_parameters( $xml );
+
+      $products_result = $this->import_products( $xml );
 
       // error_log( "cat_result\n" . print_r($cat_result, true) . "\n" );
       // error_log( "products_result\n" . print_r($products_result, true) . "\n" );
@@ -174,7 +176,6 @@ class BM_XML_Products_Import {
                $deleted = wp_delete_term( $existing_category[0]->term_id, 'product_cat' );
                $this->bm_log('removed term - ' . $imported_category['asortyment_nazwa']);
                $this->bm_log( "removed term result\n" . print_r($deleted, true) . "\n");
-
 
             }
    
@@ -390,6 +391,101 @@ class BM_XML_Products_Import {
          
    }
 
+   public function import_parameters( $xml ) {
+      $imported_parameters = $xml->wykazy->parametry;
+
+      foreach ( $imported_parameters->parametr as $parameter ) {
+         if ( $parameter->parametr_id == '4' ) {
+            $this->import_marki( $parameter );
+         }
+      }
+   }
+
+   public function import_marki( $parameter ) {
+      $parameter = json_decode( json_encode( $parameter ), true );
+
+      // error_log( "parameter\n" . print_r($parameter, true) . "\n" );
+
+      foreach ( $parameter['listy_wartosci']['lista_wartosci'] as $list_wartosci ) {
+
+         $args = array(
+            'hide_empty' => false,
+            'number' => 1,
+            'meta_query' => array(
+               array(
+                  'key'         =>  'wartosc',
+                  'value'       =>  $list_wartosci['wartosc'],
+                  'compare'     =>  '=='
+               )
+            ),
+         );
+         $existing_attribute = get_terms( 'pa_marka', $args );
+   
+         if( ! empty( $existing_attribute ) ) {
+
+            // update existing attribute term
+            $args = array(
+               'name' => $list_wartosci['tekst'],
+               'slug' => '',
+            );
+            wp_update_term( $existing_attribute[0]->term_id, 'pa_marka', $args );
+            update_term_meta( $existing_attribute[0]->term_id, 'wartosc', $list_wartosci['wartosc'] );
+   
+            $this->bm_log( 'updated attribuet term (marka) ' . $list_wartosci['tekst'] );
+   
+         } else {
+   
+            // create new attribute term
+            $term = wp_insert_term( 
+               $list_wartosci['tekst'],
+               'pa_marka', 
+               array(
+                  'description' => '',
+                  'slug'        => '',
+               ) 
+            );
+            $this->bm_log( "wp_insert_term\n" . print_r($term, true) . "\n" );
+
+
+
+
+            
+            // if term exist but not has asortyment_id meta set
+            if ( is_wp_error($term) && $term->get_error_code() == "term_exists" ) {
+               $term_id = $term->get_error_data();
+               $term = array();
+               $term['term_id'] = $term_id;
+               $this->bm_log( '--existing attribute term (marka) without wartosc - ' . $list_wartosci['tekst'] );
+            }
+
+            update_term_meta( $term['term_id'], 'wartosc', $list_wartosci['wartosc'] );
+   
+            $this->bm_log( 'created attribute term (marka) - ' . $list_wartosci['tekst'] . ', wartosc - ' . $list_wartosci['wartosc'] );
+
+         }
+      }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   }
+
 
    /**
     * Import/update products.
@@ -477,12 +573,17 @@ class BM_XML_Products_Import {
                   )
                );
 
+               if ( isset( $imported_product['parametry']['parametr'] ) ) {
+                  $parametry = array_column( $imported_product['parametry']['parametr'], 'parametr_wartosc', 'parametr_id' );
+               } 
+
                $this->set_product_data(
                   array(
                      'id' => $existing_product_id,
                      'towar_id' => $imported_product['towar_id'],
                      'asortyment_id' => $imported_product['asortyment_id'],
                      'kategoria_id' => $imported_product['kategoria_id'],
+                     'marka' => $parametry[4] ?? 0,
                      'plik_zdjecia' => $imported_product['plik_zdjecia'],
                      'cena_detal' => $imported_product['cena_detal'], 
                      'stock' => $imported_product['magazyny']['magazyn']['0']['stan_magazynu'], 
@@ -533,6 +634,9 @@ class BM_XML_Products_Import {
 
             wp_set_object_terms( $new_product_id, 'simple', 'product_type' ); // simple product
             
+            if ( isset( $imported_product['parametry']['parametr'] ) ) {
+               $parametry = array_column( $imported_product['parametry']['parametr'], 'parametr_wartosc', 'parametr_id' );
+            } 
 
             $this->set_product_data(
                array(
@@ -540,6 +644,7 @@ class BM_XML_Products_Import {
                   'towar_id' => $imported_product['towar_id'],
                   'asortyment_id' => $imported_product['asortyment_id'],
                   'kategoria_id' => $imported_product['kategoria_id'],
+                  'marka' => $parametry[4] ?? 0,
                   'plik_zdjecia' => $imported_product['plik_zdjecia'],
                   'cena_detal' => $imported_product['cena_detal'], 
                   'stock' => $imported_product['magazyny']['magazyn']['0']['stan_magazynu'], 
@@ -599,8 +704,6 @@ class BM_XML_Products_Import {
             ),
          );
          $product_category = get_terms( 'product_cat', $args );
-         // error_log( "asortyment_id\n" . print_r($data['asortyment_id'], true) . "\n" );
-         // error_log( "product_category\n" . print_r($product_category, true) . "\n" );
 
          // set category
          if(!empty($product_category)) { // if exist
@@ -633,17 +736,15 @@ class BM_XML_Products_Import {
             'number' => 1,
             'meta_query' => array(
                array(
-                  'key'         =>  'kategoria_id',
-                  'value'   => $data['kategoria_id'],
+                  'key' =>  'kategoria_id',
+                  'value' => $data['kategoria_id'],
                   'compare' => '=='
                )
             ),
          );
          $product_tag = get_terms( 'product_tag', $args );
-         // error_log( "kategoria_id\n" . print_r($data['kategoria_id'], true) . "\n" );
-         // error_log( "product_category\n" . print_r($product_tag, true) . "\n" );
 
-         // set category
+         // set tag
          if(!empty($product_tag)) { // if exist
             wp_set_object_terms( $data['id'], $product_tag[0]->term_id, 'product_tag' );
          } else { // create new category if not exist
@@ -661,6 +762,52 @@ class BM_XML_Products_Import {
             error_log('new not existing tag created from product (temporary named by ID) ' . $data['kategoria_id']);
 
          }           
+      }
+
+
+      // set product marka
+      if ( isset( $data['marka'] ) && ! is_array( $data['marka'] ) ) {
+
+         $args = array(
+            'hide_empty' => false,
+            'number' => 1,
+            'meta_query' => array(
+               array(
+                  'key' =>  'wartosc',
+                  'value' => $data['marka'],
+                  'compare' => '=='
+               )
+            ),
+         );
+         $marka = get_terms( 'pa_marka', $args );
+
+         // set marka
+         if ( ! empty( $marka ) ) { // if exist
+            wp_set_object_terms( $data['id'], $marka[0]->term_id, 'pa_marka' );
+         } else { // create new category if not exist
+            $term = wp_insert_term( 
+               $data['marka'],
+               'pa_marka', 
+               array(
+                  'description' => '',
+                  'slug'        => '',
+               ) 
+            );   
+            update_term_meta( $term['term_id'], 'wartosc', $data['marka']);
+            wp_set_object_terms( $data['id'], $term['term_id'], 'pa_marka' );   
+            error_log('new not existing marka created from product (temporary named by ID) ' . $data['marka']);
+         }
+
+         // set product attribute meta
+         $attribute_args = array(
+            'pa_marka' => array( 
+               'name' => 'pa_marka', 
+               'value' => $marka[0]->term_id ?? $term['term_id'],
+               'is_visible' => '1',
+               'is_taxonomy' => '1',
+            )
+         );
+         update_post_meta( $data['id'], '_product_attributes', $attribute_args);       
       }
 
 
@@ -841,9 +988,17 @@ class BM_XML_Products_Import {
  * @since 1.0.0
  *
  */
-add_action( 'admin_init', function() {
+add_action( 'init', function() {
 
    if (isset($_FILES['bm_uload_file']) && ($_FILES['bm_uload_file']['error'] == UPLOAD_ERR_OK)) {
+
+      // $attributes = wc_get_attribute_taxonomies();
+      // // error_log( "attributes\n" . print_r($attributes, true) . "\n" );
+      // $terms = get_terms(array(
+      //     'taxonomy' => 'pa_marka',
+      //     'hide_empty' => false,
+      // ));
+      // // error_log( "terms\n" . print_r($terms, true) . "\n" );
 
       $import = new BM_XML_Products_Import($_FILES['bm_uload_file']['tmp_name']);
 

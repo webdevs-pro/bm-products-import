@@ -3,7 +3,7 @@
 Plugin Name: BM Products Importer 
 Plugin URI: https://github.com/webdevs-pro/bm-products-import/
 Description: This plugin imports products from locals store
-Version: 1.8.4
+Version: 1.9
 Author: Magnific Soft
 Author URI: https://github.com/webdevs-pro/
 Text Domain:  bm-products-import
@@ -391,8 +391,22 @@ function custom_action_scheduler_failed_action( $action_id, $timeout ){
  add_action('action_scheduler_failed_action', 'custom_action_scheduler_failed_action', 10, 2);
  
 
-// if ( class_exists( 'ActionScheduler' ) ) {
-//     error_log( "ActionScheduler exist\n" );
-// } else {
-//     error_log( "ActionScheduler not exist\n" );
+
+
+
+
+
+
+// add_action( 'init', 'action_function_name_6289' );
+// function action_function_name_6289(){
+//     $attributes = wc_get_attribute_taxonomies();
+//     // error_log( "attributes\n" . print_r($attributes, true) . "\n" );
+//     $terms = get_terms(array(
+//         'taxonomy' => 'pa_marka',
+//         'hide_empty' => false,
+//     ));
+//     // error_log( "terms\n" . print_r($terms, true) . "\n" );
+    
 // }
+
+
