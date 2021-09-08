@@ -837,7 +837,11 @@ class BM_XML_Products_Import {
                'is_taxonomy' => '1',
             )
          );
-         update_post_meta( $data['id'], '_product_attributes', $attribute_args);       
+         update_post_meta( $data['id'], '_product_attributes', $attribute_args);    
+         
+         // set is_purchasable
+         update_post_meta( $data['id'], 'acf_blokada_zakupu_online', $data['acf_blokada_zakupu_online'] );   
+
       }
 
 
