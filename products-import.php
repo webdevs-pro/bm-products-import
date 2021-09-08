@@ -598,8 +598,8 @@ class BM_XML_Products_Import {
                      'qty_exact' => $imported_product['opis3'] ?: '',
                      'il_kg_litrow' => $imported_product['il_kg_litrow'] ?: '',
                      'qty_label' => $qty_label ?: '',
-                     'acf_blokada_zakupu_online' => $parametry[5] ? 'tak' : 'nie',
-                     'acf_dodatkowa_kategoria' => $parametry[8],
+                     'acf_blokada_zakupu_online' => isset( $parametry[5] ) ? ( $parametry[5] ? 'tak' : 'nie' ) : '',
+                     'acf_dodatkowa_kategoria' => isset( $parametry[8] ) ? $parametry[8] : '',
                   )
                );
 
@@ -714,9 +714,29 @@ class BM_XML_Products_Import {
          );
          $product_category = get_terms( 'product_cat', $args );
 
+
+         // get product additional category
+         if ( isset( $data['acf_dodatkowa_kategoria'] ) && ! is_array( $data['acf_dodatkowa_kategoria'] ) ) {
+
+            $additional_categories = get_option( 'dodatkowe_kategorie' );
+            ob_start();
+            var_dump( json_encode( $data['acf_dodatkowa_kategoria'] ) );
+            $debug = ob_get_clean();
+            error_log( "debug\n" . print_r( $debug, true ) . "\n" );
+            error_log( "sku\n" . print_r( $data['sku'], true ) . "\n" );
+            $additional_term = get_term_by( 'name', $additional_categories[$data['acf_dodatkowa_kategoria']], 'product_cat' );
+            
+            if ( is_object( $additional_term ) ) {
+               $additional_term = $additional_term->term_id;
+               wp_set_object_terms( $data['id'], $additional_term, 'product_cat', true );
+               update_post_meta( $data['id'], 'acf_dodatkowa_kategoria', $additional_term );       
+            }
+
+         }
+
          // set category
          if(!empty($product_category)) { // if exist
-            wp_set_object_terms( $data['id'], $product_category[0]->term_id, 'product_cat' );
+            wp_set_object_terms( $data['id'], [ $product_category[0]->term_id, $additional_term ?: '' ], 'product_cat' );
          } else { // create new category if not exist
             $term = wp_insert_term( 
                $data['asortyment_id'],
@@ -728,7 +748,7 @@ class BM_XML_Products_Import {
                ) 
             );   
             update_term_meta( $term['term_id'], 'asortyment_id', $data['asortyment_id']);
-            wp_set_object_terms( $data['id'], $term['term_id'], 'product_cat' );   
+            wp_set_object_terms( $data['id'], [ $term['term_id'], $additional_term ?: '' ], 'product_cat' );   
             error_log('new not existing category created from product (temporary named by ID) ' . $data['asortyment_id']);
 
          }           
@@ -820,19 +840,6 @@ class BM_XML_Products_Import {
          update_post_meta( $data['id'], '_product_attributes', $attribute_args);       
       }
 
-
-      // set product additional category
-      if ( isset( $data['acf_dodatkowa_kategoria'] ) && ! is_array( $data['acf_dodatkowa_kategoria'] ) ) {
-
-         $additional_categories = get_option( 'dodatkowe_kategorie' );
-         $term = get_term_by('name', $additional_categories[$data['acf_dodatkowa_kategoria']], 'product_cat');
-
-         if ( $term ) {
-            wp_set_object_terms( $data['id'], $term->term_id, 'product_cat', true );
-            update_post_meta( $data['id'], 'acf_dodatkowa_kategoria', $term->name );       
-         }
-
-      }
 
 
 
