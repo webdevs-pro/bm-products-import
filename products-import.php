@@ -394,9 +394,13 @@ class BM_XML_Products_Import {
    public function import_parameters( $xml ) {
       $imported_parameters = $xml->wykazy->parametry;
 
+      if ( empty( $imported_parameters ) ) return;
       foreach ( $imported_parameters->parametr as $parameter ) {
          if ( $parameter->parametr_id == '4' ) {
             $this->import_marki( $parameter );
+         }
+         if ( $parameter->parametr_id == '8' ) {
+            $this->import_dodatkowa_kategoria( $parameter );
          }
       }
    }
@@ -446,10 +450,6 @@ class BM_XML_Products_Import {
             );
             $this->bm_log( "wp_insert_term\n" . print_r($term, true) . "\n" );
 
-
-
-
-            
             // if term exist but not has asortyment_id meta set
             if ( is_wp_error($term) && $term->get_error_code() == "term_exists" ) {
                $term_id = $term->get_error_data();
@@ -464,26 +464,17 @@ class BM_XML_Products_Import {
 
          }
       }
+   }
 
+   public function import_dodatkowa_kategoria( $parameter ) {
+      $parameter = json_decode( json_encode( $parameter ), true );
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      $arr = array();
+      // error_log( "parameter\n" . print_r($parameter, true) . "\n" );
+      foreach ( $parameter['listy_wartosci']['lista_wartosci'] as $list_wartosci ) {
+         $arr[$list_wartosci['wartosc']] = $list_wartosci['tekst'];
+      }
+      update_option( 'dodatkowe_kategorie', $arr );
    }
 
 
@@ -540,6 +531,20 @@ class BM_XML_Products_Import {
          );
          $existing_product = wc_get_products($args);
 
+         // // database lookup for $post_id if person already exists, null otherwise
+         // global $wpdb;
+         // $querystr = "SELECT `pm`.`post_id`
+         //       FROM `$wpdb->postmeta` as `pm`
+         //          INNER JOIN `$wpdb->posts` as `p`
+         //          ON `pm`.`post_id` = `p`.`ID`
+         //       WHERE
+         //          (`pm`.`meta_key` = 'kontaktperson_id' AND `pm`.`meta_value` = %s AND
+         //          `p`.`post_type` = %s)
+         //       LIMIT 1;
+         // ";
+         // $person_post_id = $wpdb->get_var($wpdb->prepare($querystr, $openimmo_data['kontaktperson_id'], apply_filters( 'immomakler_person_post_type', 'immomakler_person', $openimmo_data )));
+         
+
          // set qty label
          if($imported_product['jm_id'] == '1') {
             $qty_label = 'szt';
@@ -593,6 +598,8 @@ class BM_XML_Products_Import {
                      'qty_exact' => $imported_product['opis3'] ?: '',
                      'il_kg_litrow' => $imported_product['il_kg_litrow'] ?: '',
                      'qty_label' => $qty_label ?: '',
+                     'acf_blokada_zakupu_online' => $parametry[5] ? 'tak' : 'nie',
+                     'acf_dodatkowa_kategoria' => $parametry[8],
                   )
                );
 
@@ -654,6 +661,8 @@ class BM_XML_Products_Import {
                   'qty_exact' => $imported_product['opis3'] ?: '',
                   'il_kg_litrow' => $imported_product['il_kg_litrow'] ?: '',
                   'qty_label' => $qty_label ?: '',
+                  'acf_blokada_zakupu_online' => $parametry[5] ? 'tak' : 'nie',
+                  'acf_dodatkowa_kategoria' => $parametry[8],
                )
             );
 
@@ -798,6 +807,7 @@ class BM_XML_Products_Import {
             error_log('new not existing marka created from product (temporary named by ID) ' . $data['marka']);
          }
 
+
          // set product attribute meta
          $attribute_args = array(
             'pa_marka' => array( 
@@ -808,6 +818,20 @@ class BM_XML_Products_Import {
             )
          );
          update_post_meta( $data['id'], '_product_attributes', $attribute_args);       
+      }
+
+
+      // set product additional category
+      if ( isset( $data['acf_dodatkowa_kategoria'] ) && ! is_array( $data['acf_dodatkowa_kategoria'] ) ) {
+
+         $additional_categories = get_option( 'dodatkowe_kategorie' );
+         $term = get_term_by('name', $additional_categories[$data['acf_dodatkowa_kategoria']], 'product_cat');
+
+         if ( $term ) {
+            wp_set_object_terms( $data['id'], $term->term_id, 'product_cat', true );
+            update_post_meta( $data['id'], 'acf_dodatkowa_kategoria', $term->name );       
+         }
+
       }
 
 
