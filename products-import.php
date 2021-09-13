@@ -510,17 +510,7 @@ class BM_XML_Products_Import {
          $imported_product = json_decode(json_encode($imported_product), true);
          // error_log( "imported_product\n" . print_r($imported_product, true) . "\n" );
 
-         // ignore by assortyment
-         if(in_array($imported_product['asortyment_id'], $this->exclude_asortyments)) {
-            $this->bm_log('ignored product - ' . $imported_product['nazwa'] . ', asortyment_id - ' . $imported_product['asortyment_id']);
-            continue;
-         }
 
-         // ignore by category
-         if(in_array($imported_product['kategoria_id'], $this->exclude_categories)) {
-            $this->bm_log('ignored product - ' . $imported_product['nazwa'] . ', kategoria_id - ' . $imported_product['kategoria_id']);
-            continue;
-         }
 
          $args = array(
             'post_type' => 'product',
@@ -569,6 +559,18 @@ class BM_XML_Products_Import {
 
             // check to remove product
             if ($imported_product['do_usuniecia'] == 'N') { // UPDATE
+
+               // ignore by assortyment
+               if(in_array($imported_product['asortyment_id'], $this->exclude_asortyments)) {
+                  $this->bm_log('ignored product - ' . $imported_product['nazwa'] . ', asortyment_id - ' . $imported_product['asortyment_id']);
+                  continue;
+               }
+
+               // ignore by category
+               if(in_array($imported_product['kategoria_id'], $this->exclude_categories)) {
+                  $this->bm_log('ignored product - ' . $imported_product['nazwa'] . ', kategoria_id - ' . $imported_product['kategoria_id']);
+                  continue;
+               }
 
                wp_update_post(
                   array(
