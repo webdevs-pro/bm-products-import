@@ -630,8 +630,19 @@ class BM_XML_Products_Import {
 
          } else {
 
-            // create new product
+            // ignore by assortyment
+            if(in_array($imported_product['asortyment_id'], $this->exclude_asortyments)) {
+               $this->bm_log('ignored product - ' . $imported_product['nazwa'] . ', asortyment_id - ' . $imported_product['asortyment_id']);
+               continue;
+            }
 
+            // ignore by category
+            if(in_array($imported_product['kategoria_id'], $this->exclude_categories)) {
+               $this->bm_log('ignored product - ' . $imported_product['nazwa'] . ', kategoria_id - ' . $imported_product['kategoria_id']);
+               continue;
+            }
+
+            // create new product
             $new_product_id = wp_insert_post( 
                array(
                   'post_title' => $imported_product['nazwa'],
