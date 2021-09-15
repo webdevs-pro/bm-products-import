@@ -593,6 +593,7 @@ class BM_XML_Products_Import {
                      'marka' => $parametry[4] ?? 0,
                      'plik_zdjecia' => $imported_product['plik_zdjecia'],
                      'cena_detal' => $imported_product['cena_detal'], 
+                     'cena_detal_przed_prom' => $imported_product['cena_detal_przed_prom'], 
                      'stock' => $imported_product['magazyny']['magazyn']['0']['stan_magazynu'], 
                      'sku' => $imported_product['kod'],
                      'min_qty' => $imported_product['opis1'] ?: '',
@@ -667,6 +668,7 @@ class BM_XML_Products_Import {
                   'marka' => $parametry[4] ?? 0,
                   'plik_zdjecia' => $imported_product['plik_zdjecia'],
                   'cena_detal' => $imported_product['cena_detal'], 
+                  'cena_detal_przed_prom' => $imported_product['cena_detal_przed_prom'], 
                   'stock' => $imported_product['magazyny']['magazyn']['0']['stan_magazynu'], 
                   'sku' => $imported_product['kod'],
                   'min_qty' => $imported_product['opis1'] ?: '',
@@ -732,11 +734,11 @@ class BM_XML_Products_Import {
          if ( isset( $data['acf_dodatkowa_kategoria'] ) && ! is_array( $data['acf_dodatkowa_kategoria'] ) ) {
 
             $additional_categories = get_option( 'dodatkowe_kategorie' );
-            ob_start();
-            var_dump( json_encode( $data['acf_dodatkowa_kategoria'] ) );
-            $debug = ob_get_clean();
-            error_log( "debug\n" . print_r( $debug, true ) . "\n" );
-            error_log( "sku\n" . print_r( $data['sku'], true ) . "\n" );
+            // ob_start();
+            // var_dump( json_encode( $data['acf_dodatkowa_kategoria'] ) );
+            // $debug = ob_get_clean();
+            // error_log( "debug\n" . print_r( $debug, true ) . "\n" );
+            // error_log( "sku\n" . print_r( $data['sku'], true ) . "\n" );
             $additional_term = get_term_by( 'name', $additional_categories[$data['acf_dodatkowa_kategoria']], 'product_cat' );
             
             if ( is_object( $additional_term ) ) {
@@ -925,9 +927,15 @@ class BM_XML_Products_Import {
 
 
       // set price
-      if (isset($data['cena_detal']) && !is_array($data['cena_detal'])) {
-         update_post_meta( $data['id'], '_price', $data['cena_detal'] ?: '');
-         update_post_meta( $data['id'], '_regular_price', $data['cena_detal'] ?: ''); 
+      if ( isset( $data['cena_detal'] ) && ! is_array( $data['cena_detal'] ) ) {
+         if ( $data['cena_detal_przed_prom'] ) {
+            update_post_meta( $data['id'], '_price', $data['cena_detal_przed_prom'] ?: '');
+            update_post_meta( $data['id'], '_regular_price', $data['cena_detal_przed_prom'] ?: ''); 
+            update_post_meta( $data['id'], '_sale_price', $data['cena_detal'] ?: ''); 
+         } else {
+            update_post_meta( $data['id'], '_price', $data['cena_detal'] ?: '');
+            update_post_meta( $data['id'], '_regular_price', $data['cena_detal'] ?: ''); 
+         }
       }
 
       // set stock
