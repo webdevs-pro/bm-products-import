@@ -936,7 +936,7 @@ class BM_XML_Products_Import {
          } else { // normal
             update_post_meta( $data['id'], '_price', $data['cena_detal'] ?: '');
             update_post_meta( $data['id'], '_regular_price', $data['cena_detal'] ?: ''); 
-            update_post_meta( $data['id'], '_sale_price', '');
+            delete_post_meta( $data['id'], '_sale_price' );
          }
       }
 
