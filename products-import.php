@@ -928,13 +928,14 @@ class BM_XML_Products_Import {
 
       // set price
       if ( isset( $data['cena_detal'] ) && ! is_array( $data['cena_detal'] ) ) {
-         if ( $data['cena_detal_przed_prom'] ) {
+         if ( $data['cena_detal_przed_prom'] ) { // if sale
             update_post_meta( $data['id'], '_price', $data['cena_detal'] ?: '');
             update_post_meta( $data['id'], '_regular_price', $data['cena_detal_przed_prom'] ?: ''); 
             update_post_meta( $data['id'], '_sale_price', $data['cena_detal'] ?: ''); 
-         } else {
+         } else { // normal
             update_post_meta( $data['id'], '_price', $data['cena_detal'] ?: '');
             update_post_meta( $data['id'], '_regular_price', $data['cena_detal'] ?: ''); 
+            update_post_meta( $data['id'], '_sale_price', '');
          }
       }
 
