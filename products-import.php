@@ -38,7 +38,10 @@ class BM_XML_Products_Import {
       // add_action('bm_set_product_image_by_url', [$this, 'set_product_image_by_url'], 10);
 
       $after = microtime(true);
+
+      wc_update_product_lookup_tables_column( ['column' => 'onsale'] );
       delete_transient( 'wc_products_onsale' );
+
       $this->bm_log($after-$before);
       $this->bm_log('---- IMPORT END ----------------------------------------------------------------------------------------------------------');
       
